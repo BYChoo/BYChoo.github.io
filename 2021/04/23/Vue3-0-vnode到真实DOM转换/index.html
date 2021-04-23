@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="在 Vue.js 中，组件是一个非常重要的概念，整个应用的页面都是通过组件渲染来实现的 首先，组件是一个抽象的概念，它是对一棵 DOM 树的抽象，我们在页面中写一个组件节点： 1&lt;hello-world&gt;&lt;&#x2F;hello-world&gt;  这段代码并不会在页面上渲染一个&lt;hello-world&gt;标签，而他具体渲染成什么，取决于你怎么编写HelloWorld组件的模版">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Vue3.0: vnode到真实DOM转换">
+<meta property="og:url" content="http://example.com/2021/04/23/Vue3-0-vnode%E5%88%B0%E7%9C%9F%E5%AE%9EDOM%E8%BD%AC%E6%8D%A2/index.html">
+<meta property="og:site_name" content="Choo&#39;blog">
+<meta property="og:description" content="在 Vue.js 中，组件是一个非常重要的概念，整个应用的页面都是通过组件渲染来实现的 首先，组件是一个抽象的概念，它是对一棵 DOM 树的抽象，我们在页面中写一个组件节点： 1&lt;hello-world&gt;&lt;&#x2F;hello-world&gt;  这段代码并不会在页面上渲染一个&lt;hello-world&gt;标签，而他具体渲染成什么，取决于你怎么编写HelloWorld组件的模版">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-04-23T10:18:02.000Z">
+<meta property="article:modified_time" content="2021-04-23T10:18:12.985Z">
+<meta property="article:author" content="Choo">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2021/04/23/Vue3-0-vnode%E5%88%B0%E7%9C%9F%E5%AE%9EDOM%E8%BD%AC%E6%8D%A2/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Vue3.0: vnode到真实DOM转换 | Choo'blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Choo'blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/04/23/Vue3-0-vnode%E5%88%B0%E7%9C%9F%E5%AE%9EDOM%E8%BD%AC%E6%8D%A2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Choo">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Choo'blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Vue3.0: vnode到真实DOM转换
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-04-23 18:18:02 / 修改时间：18:18:12" itemprop="dateCreated datePublished" datetime="2021-04-23T18:18:02+08:00">2021-04-23</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在 Vue.js 中，组件是一个非常重要的概念，整个应用的页面都是通过组件渲染来实现的</p>
+<p>首先，组件是一个抽象的概念，它是对一棵 DOM 树的抽象，我们在页面中写一个组件节点：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;hello-world&gt;&lt;/hello-world&gt;</span><br></pre></td></tr></table></figure>
+
+<p>这段代码并不会在页面上渲染一个<code>&lt;hello-world&gt;</code>标签，而他具体渲染成什么，取决于你怎么编写HelloWorld组件的模版。</p>
+<p>所以，从表现上来看，组件的模板决定了组件生成的 DOM 标签，而在 Vue.js 内部，一个组件想要真正的渲染生成 DOM，还需要经历<strong>“创建 vnode - 渲染 vnode - 生成 DOM” 这几个步骤</strong></p>
+<h4 id="应用程序初始化"><a href="#应用程序初始化" class="headerlink" title="应用程序初始化"></a>应用程序初始化</h4><p>一个组件可以通过“模板加对象描述”的方式创建，组件创建好以后是如何被调用并初始化的呢？因为整个组件树是由根组件开始渲染的，为了找到根组件的渲染入口，我们需要从应用程序的初始化过程开始分析。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在 Vue.js 2.x 中，初始化一个应用的方式如下</span></span><br><span class="line"><span class="keyword">import</span> Vue <span class="keyword">from</span> <span class="string">&#x27;vue&#x27;</span></span><br><span class="line"><span class="keyword">import</span> App <span class="keyword">from</span> <span class="string">&#x27;./App&#x27;</span></span><br><span class="line"><span class="keyword">const</span> app = <span class="keyword">new</span> Vue(&#123;</span><br><span class="line">  render: <span class="function"><span class="params">h</span> =&gt;</span> h(App)</span><br><span class="line">&#125;)</span><br><span class="line">app.$mount(<span class="string">&#x27;#app&#x27;</span>)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在 Vue.js 3.0 中，初始化一个应用的方式如下</span></span><br><span class="line"><span class="keyword">import</span> &#123; createApp &#125; <span class="keyword">from</span> <span class="string">&#x27;vue&#x27;</span></span><br><span class="line"><span class="keyword">import</span> App <span class="keyword">from</span> <span class="string">&#x27;./app&#x27;</span></span><br><span class="line"><span class="keyword">const</span> app = createApp(App)</span><br><span class="line">app.mount(<span class="string">&#x27;#app&#x27;</span>)</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，Vue.js 3.0 初始化应用的方式和 Vue.js 2.x 差别并不大，本质上都是把 App 组件挂载到 id 为 app 的 DOM 节点上。</p>
+<p>但是，在 Vue.js 3.0 中还导入了一个 createApp，其实这是个入口函数，它是 Vue.js 对外暴露的一个函数</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> createApp = (<span class="function">(<span class="params">...args</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="comment">// 创建 app 对象</span></span><br><span class="line">  <span class="keyword">const</span> app = ensureRenderer().createApp(...args)</span><br><span class="line">  <span class="keyword">const</span> &#123; mount &#125; = app</span><br><span class="line">  <span class="comment">// 重写 mount 方法</span></span><br><span class="line">  app.mount = <span class="function">(<span class="params">containerOrSelector</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> app</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+<p>从代码中可以看出 createApp 主要做了两件事情：创建 app 对象和重写 app.mount 方法。</p>
+<h4 id="1-创建app对象"><a href="#1-创建app对象" class="headerlink" title="1.创建app对象"></a>1.创建app对象</h4><p>首先，我们使用 ensureRenderer().createApp() 来创建 app 对象 ：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> app = ensureRenderer().createApp(...args)</span><br></pre></td></tr></table></figure>
+
+<p>其中 ensureRenderer() 用来创建一个渲染器对象，它的内部代码是这样的：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> app = ensureRenderer().createApp(...args)</span><br></pre></td></tr></table></figure>
+
+<p>其中ensureRenderer()用来创建一个渲染器对象，它的内部代码是这样的：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 渲染相关的一些配置，比如更新属性的方法，操作 DOM 的方法</span></span><br><span class="line"><span class="keyword">const</span> rendererOptions = &#123;</span><br><span class="line">  patchProp,</span><br><span class="line">  ...nodeOps</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 延时创建渲染器，当用户只依赖响应式包的时候，可以通过 tree-shaking 移除核心渲染逻辑相关的代码</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">ensureRenderer</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> renderer || (renderer = createRenderer(rendererOptions))</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">createRenderer</span>(<span class="params">options</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> baseCreateRenderer(options)</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">baseCreateRenderer</span>(<span class="params">options</span>) </span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">function</span> <span class="title">render</span>(<span class="params">vnode, container</span>) </span>&#123;</span><br><span class="line">    <span class="comment">// 组件渲染的核心逻辑</span></span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> &#123;</span><br><span class="line">    render,</span><br><span class="line">    createApp: createAppAPI(render)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">createAppAPI</span>(<span class="params">render</span>) </span>&#123;</span><br><span class="line">  <span class="comment">// createApp createApp 方法接受的两个参数：根组件的对象和 prop</span></span><br><span class="line">  <span class="keyword">return</span> <span class="function"><span class="keyword">function</span> <span class="title">createApp</span>(<span class="params">rootComponent, rootProps = <span class="literal">null</span></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">const</span> app = &#123;</span><br><span class="line">      _component: rootComponent,</span><br><span class="line">      _props: rootProps,</span><br><span class="line">      <span class="function"><span class="title">mount</span>(<span class="params">rootContainer</span>)</span> &#123;</span><br><span class="line">        <span class="comment">// 创建根组件的 vnode</span></span><br><span class="line">        <span class="keyword">const</span> vnode = createVNode(rootComponent, rootProps)</span><br><span class="line">        <span class="comment">// 利用渲染器渲染 vnode</span></span><br><span class="line">        render(vnode, rootContainer)</span><br><span class="line">        app._container = rootContainer</span><br><span class="line">        <span class="keyword">return</span> vnode.component.proxy</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> app</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，这里先用ensureRenderer()来延时创建渲染器，这样做的好处是当用户只依赖响应式包的时候，就不会创建渲染器，因此可以通过tree-shaking的方式移除核心渲染逻辑相关的代码</p>
+<p>在 Vue.js 3.0 内部通过 createRenderer 创建一个渲染器，这个渲染器内部会有一个 createApp 方法，它是执行 createAppAPI 方法返回的函数，接受了 rootComponent 和 rootProps 两个参数，我们在应用层面执行 createApp(App) 方法时，会把 App 组件对象作为根组件传递给 rootComponent。这样，createApp 内部就创建了一个 app 对象，它会提供 mount 方法，这个方法是用来挂载组件的。</p>
+<h3 id="核心渲染流程：创建-vnode-和渲染-vnode"><a href="#核心渲染流程：创建-vnode-和渲染-vnode" class="headerlink" title="核心渲染流程：创建 vnode 和渲染 vnode"></a>核心渲染流程：创建 vnode 和渲染 vnode</h3><h4 id="1-创建vnode"><a href="#1-创建vnode" class="headerlink" title="1.创建vnode"></a>1.创建vnode</h4><p>首先，是创建vnode的过程</p>
+<p>vnode本质上是用来描述DOM的Javascript对象，它在Vue.js 中可以描述不同类型的节点，比如普通元素节点、组件节点等。</p>
+<p>什么是普通元素节点呢？</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">button</span> <span class="attr">class</span>=<span class="string">&quot;btn&quot;</span> <span class="attr">style</span>=<span class="string">&quot;width:100px;height:50px&quot;</span>&gt;</span>click me<span class="tag">&lt;/<span class="name">button</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>我们可以用vnode这样表示<code>button</code>标签</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> vnode = &#123;</span><br><span class="line">  type: <span class="string">&#x27;button&#x27;</span>,</span><br><span class="line">  props: &#123; </span><br><span class="line">    <span class="string">&#x27;class&#x27;</span>: <span class="string">&#x27;btn&#x27;</span>,</span><br><span class="line">    style: &#123;</span><br><span class="line">      width: <span class="string">&#x27;100px&#x27;</span>,</span><br><span class="line">      height: <span class="string">&#x27;50px&#x27;</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;,</span><br><span class="line">  children: <span class="string">&#x27;click me&#x27;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>其中，type 属性表示 DOM 的标签类型，props 属性表示 DOM 的一些附加信息，比如 style 、class 等，children 属性表示 DOM 的子节点，它也可以是一个 vnode 数组，只不过 vnode 可以用字符串表示简单的文本 。</p>
+<p>什么是组件节点呢？其实， vnode 除了可以像上面那样用于描述一个真实的 DOM，也可以用来描述组件。</p>
+<p>我们先在模板中引入一个组件标签 <custom-component>：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">custom-component</span> <span class="attr">msg</span>=<span class="string">&quot;test&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">custom-component</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>我们可以用 vnode 这样表示 <custom-component> 组件标签：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> CustomComponent = &#123;</span><br><span class="line">  <span class="comment">// 在这里定义组件对象</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">const</span> vnode = &#123;</span><br><span class="line">  type: CustomComponent,</span><br><span class="line">  props: &#123; </span><br><span class="line">    msg: <span class="string">&#x27;test&#x27;</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>组件 vnode 其实是对抽象事物的描述，这是因为我们并不会在页面上真正渲染一个 <custom-component> 标签，而是渲染组件内部定义的 HTML 标签。</p>
+<p><strong>那么 vnode 有什么优势呢？为什么一定要设计 vnode 这样的数据结构呢？</strong></p>
+<p>首先是抽象，引入vnode，可以把渲染过程抽象化，从而使得组件的抽象能力也得到提升</p>
+<p>其次是跨平台，因为patch vnode的过程不同平台可以有自己的实现，基于vnode再做服务端渲染、weex平台、小程序的平台的渲染都变得容易很多</p>
+<p>使用vnode并不意味着不用操作DOM了，很多人会误以为vnode的性能一定比手动操作原生DOM好，这个其实不一定。</p>
+<p>因为，首先这种基于vnode实现的MVVM框架，在每次render to vnode的过程中，渲染组件会有一定的javascript耗时，特别是大组件，比如一个1000 * 10的Table组件，render to vnode的过程会遍历1000 * 10次去创建内部cell vnode，整个耗时就会变得特别常，加上patch vnode的过程也会有一定的耗时，当我们去更新组件的时候，用户会感觉到明显的卡顿。虽然diff算法在减少DOM操作方面足够优秀，但最终还是免不了操作DOM，所以说性能并不是vnode的优势</p>
+<p><strong>那么，Vue.js 内部是如何创建这些 vnode 的呢？</strong></p>
+<p>回顾，app.mount函数的实现，内部是通过createVNode函数创建了根组件的vnode：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> vnode = createVNode(rootComponent, rootProps)</span><br></pre></td></tr></table></figure>
+
+<p>其实createVNode做的事情很简单，就是对props做标准化处理、对vnode的类型信息编码、创建vnode对象，标准化子节点children</p>
+<h4 id="渲染vnode"><a href="#渲染vnode" class="headerlink" title="渲染vnode"></a>渲染vnode</h4><p>回顾app.mount函数的实现，内部通过执行这段代码去渲染创建好的vnode:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">render(vnode, rootContainer)</span><br><span class="line"><span class="keyword">const</span> render = <span class="function">(<span class="params">vnode, container</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">if</span> (vnode == <span class="literal">null</span>) &#123;</span><br><span class="line">    <span class="comment">// 销毁组件</span></span><br><span class="line">    <span class="keyword">if</span> (container._vnode) &#123;</span><br><span class="line">      unmount(container._vnode, <span class="literal">null</span>, <span class="literal">null</span>, <span class="literal">true</span>)</span><br><span class="line">    &#125;</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="comment">// 创建或者更新组件</span></span><br><span class="line">    patch(container._vnode || <span class="literal">null</span>, vnode, container)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 缓存 vnode 节点，表示已经渲染</span></span><br><span class="line">  container._vnode = vnode</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这个渲染函数render的实现很简单，如果它的第一个参数vnode为空，则执行销毁组件的逻辑，否则执行创建或者更新组件的逻辑</p>
+<p>patch 本意是打补丁的意思，这个函数有两个功能，一个是根据 vnode 挂载 DOM，一个是根据新旧 vnode 更新 DOM</p>
+<p>在创建的过程中，patch 函数接受多个参数</p>
+<ul>
+<li>第一个参数 n1 表示旧的 vnode，当 n1 为 null 的时候，表示是一次挂载的过程；</li>
+<li>第二个参数 n2 表示新的 vnode 节点，后续会根据这个 vnode 类型执行不同的处理逻辑；</li>
+<li>第三个参数 container 表示 DOM 容器，也就是 vnode 渲染生成 DOM 后，会挂载到 container 下面。</li>
+</ul>
+<p>对于渲染的节点，我们这里重点关注两种类型节点的渲染逻辑：对组件的处理和对普通 DOM 元素的处理。</p>
+<p>先来看对组件的处理。由于初始化渲染的是 App 组件，它是一个组件 vnode，所以我们来看一下组件的处理逻辑是怎样的。首先是用来处理组件的 processComponent 函数的实现：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> processComponent = <span class="function">(<span class="params">n1, n2, container, anchor, parentComponent, parentSuspense, isSVG, optimized</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">if</span> (n1 == <span class="literal">null</span>) &#123;</span><br><span class="line">   <span class="comment">// 挂载组件</span></span><br><span class="line">   mountComponent(n2, container, anchor, parentComponent, parentSuspense, isSVG, optimized)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="comment">// 更新组件</span></span><br><span class="line">    updateComponent(n1, n2, parentComponent, optimized)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>该函数的逻辑很简单，如果 n1 为 null，则执行挂载组件的逻辑，否则执行更新组件的逻辑。</p>
+<p>我们接着来看挂载组件的 mountComponent 函数的实现：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> mountComponent = <span class="function">(<span class="params">initialVNode, container, anchor, parentComponent, parentSuspense, isSVG, optimized</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="comment">// 创建组件实例</span></span><br><span class="line">  <span class="keyword">const</span> instance = (initialVNode.component = createComponentInstance(initialVNode, parentComponent, parentSuspense))</span><br><span class="line">  <span class="comment">// 设置组件实例</span></span><br><span class="line">  setupComponent(instance)</span><br><span class="line">  <span class="comment">// 设置并运行带副作用的渲染函数</span></span><br><span class="line">  setupRenderEffect(instance, initialVNode, container, anchor, parentSuspense, isSVG, optimized)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，挂载组件函数 mountComponent 主要做三件事情：创建组件实例、设置组件实例、设置并运行带副作用的渲染函数。</p>
+<p>首先是创建组件实例，Vue.js 3.0 虽然不像 Vue.js 2.x 那样通过类的方式去实例化组件，但内部也通过对象的方式去创建了当前渲染的组件实例。</p>
+<p>其次设置组件实例，instance 保留了很多组件相关的数据，维护了组件的上下文，包括对 props、插槽，以及其他实例的属性的初始化处理。</p>
+<p><strong>初始渲染主要做两件事情：渲染组件生成 subTree、把 subTree 挂载到 container 中。</strong></p>
+<p>首先，是渲染组件生成 subTree，它也是一个 vnode 对象。这里要注意别把 subTree 和 initialVNode 弄混了（其实在 Vue.js 3.0 中，根据命名我们已经能很好地区分它们了，而在 Vue.js 2.x 中它们分别命名为 _vnode 和 $vnode）。我来举个例子说明，在父组件 App 中里引入了 Hello 组件：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&lt;template&gt;</span><br><span class="line">  &lt;div <span class="class"><span class="keyword">class</span></span>=<span class="string">&quot;app&quot;</span>&gt;</span><br><span class="line">    &lt;p&gt;This is an app.&lt;/p&gt;</span><br><span class="line">    &lt;hello&gt;&lt;/hello&gt;</span><br><span class="line">  &lt;/div&gt;</span><br><span class="line">&lt;/template&gt;</span><br></pre></td></tr></table></figure>
+
+<p>在Hello组件中是<code>div</code>标签包裹这一个<code>p</code>标签</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;template&gt;</span><br><span class="line">  &lt;div class&#x3D;&quot;hello&quot;&gt;</span><br><span class="line">    &lt;p&gt;Hello, Vue 3.0!&lt;&#x2F;p&gt;</span><br><span class="line">  &lt;&#x2F;div&gt;</span><br><span class="line">&lt;&#x2F;template&gt;</span><br></pre></td></tr></table></figure>
+
+<p>在 App 组件中， <hello> 节点渲染生成的 vnode ，对应的就是 Hello 组件的 initialVNode ，为了好记，你也可以把它称作“组件 vnode”。而 Hello 组件内部整个 DOM 节点对应的 vnode 就是执行 renderComponentRoot 渲染生成对应的 subTree，我们可以把它称作“子树 vnode”。</p>
+<p>我们知道每个组件都会有对应的 render 函数，即使你写 template，也会编译成 render 函数，而 renderComponentRoot 函数就是去执行 render 函数创建整个组件树内部的 vnode，把这个 vnode 再经过内部一层标准化，就得到了该函数的返回结果：子树 vnode。</p>
+<p>渲染生成子树 vnode 后，接下来就是继续调用 patch 函数把子树 vnode 挂载到 container 中了。</p>
+<p>那么我们又再次回到了 patch 函数，会继续对这个子树 vnode 类型进行判断，对于上述例子，App 组件的根节点是 <div> 标签，那么对应的子树 vnode 也是一个普通元素 vnode，那么我们接下来<strong>看对普通 DOM 元素的处理流程</strong>。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> mountElement = <span class="function">(<span class="params">vnode, container, anchor, parentComponent, parentSuspense, isSVG, optimized</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">let</span> el</span><br><span class="line">  <span class="keyword">const</span> &#123; type, props, shapeFlag &#125; = vnode</span><br><span class="line">  <span class="comment">// 创建 DOM 元素节点</span></span><br><span class="line">  el = vnode.el = hostCreateElement(vnode.type, isSVG, props &amp;&amp; props.is)</span><br><span class="line">  <span class="keyword">if</span> (props) &#123;</span><br><span class="line">    <span class="comment">// 处理 props，比如 class、style、event 等属性</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">const</span> key <span class="keyword">in</span> props) &#123;</span><br><span class="line">      <span class="keyword">if</span> (!isReservedProp(key)) &#123;</span><br><span class="line">        hostPatchProp(el, key, <span class="literal">null</span>, props[key], isSVG)</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (shapeFlag &amp; <span class="number">8</span> <span class="comment">/* TEXT_CHILDREN */</span>) &#123;</span><br><span class="line">    <span class="comment">// 处理子节点是纯文本的情况</span></span><br><span class="line">    hostSetElementText(el, vnode.children)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">else</span> <span class="keyword">if</span> (shapeFlag &amp; <span class="number">16</span> <span class="comment">/* ARRAY_CHILDREN */</span>) &#123;</span><br><span class="line">    <span class="comment">// 处理子节点是数组的情况</span></span><br><span class="line">    mountChildren(vnode.children, el, <span class="literal">null</span>, parentComponent, parentSuspense, isSVG &amp;&amp; type !== <span class="string">&#x27;foreignObject&#x27;</span>, optimized || !!vnode.dynamicChildren)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 把创建的 DOM 元素节点挂载到 container 上</span></span><br><span class="line">  hostInsert(el, container, anchor)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，挂载元素函数主要做四件事：创建 DOM 元素节点、处理 props、处理 children、挂载 DOM 元素到 container 上。</p>
+<p>首先是创建 DOM 元素节点，通过 hostCreateElement 方法创建，这是一个平台相关的方法，我们来看一下它在 Web 环境下的定义：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">createElement</span>(<span class="params">tag, isSVG, is</span>) </span>&#123;</span><br><span class="line">  isSVG ? <span class="built_in">document</span>.createElementNS(svgNS, tag)</span><br><span class="line">    : <span class="built_in">document</span>.createElement(tag, is ? &#123; is &#125; : <span class="literal">undefined</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>它调用了底层的 DOM API document.createElement 创建元素，所以本质上 Vue.js 强调不去操作 DOM ，只是希望用户不直接碰触 DOM，它并没有什么神奇的魔法，底层还是会操作 DOM。</p>
+<p>另外，如果是其他平台比如 Weex，hostCreateElement 方法就不再是操作 DOM ，而是平台相关的 API 了，这些平台相关的方法是在创建渲染器阶段作为参数传入的。</p>
+<p>创建完 DOM 节点后，接下来要做的是判断如果有 props 的话，给这个 DOM 节点添加相关的 class、style、event 等属性，并做相关的处理，这些逻辑都是在 hostPatchProp 函数内部做的，这里就不展开讲了。</p>
+<p>接下来是对子节点的处理，我们知道 DOM 是一棵树，vnode 同样也是一棵树，并且它和 DOM 结构是一一映射的。</p>
+<p>如果子节点是纯文本，则执行 hostSetElementText 方法，它在 Web 环境下通过设置 DOM 元素的 textContent 属性设置文本：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">setElementText</span>(<span class="params">el, text</span>) </span>&#123;</span><br><span class="line">  el.textContent = text</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>子节点的挂载逻辑同样很简单，遍历 children 获取到每一个 child，然后递归执行 patch 方法挂载每一个 child 。注意，这里有对 child 做预处理的情况（后面编译优化的章节会详细分析）。</p>
+<p>可以看到，mountChildren 函数的第二个参数是 container，而我们调用 mountChildren 方法传入的第二个参数是在 mountElement 时创建的 DOM 节点，这就很好地建立了父子关系。</p>
+<p>另外，通过递归 patch 这种深度优先遍历树的方式，我们就可以构造完整的 DOM 树，完成组件的渲染。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/04/23/Vue3-0%E7%9A%84%E4%BC%98%E5%8C%96/" rel="prev" title="Vue3.0的优化">
+      <i class="fa fa-chevron-left"></i> Vue3.0的优化
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/04/23/Vue-Router%EF%BC%9A%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E5%89%8D%E7%AB%AF%E8%B7%AF%E7%94%B1/" rel="next" title="Vue Router：如何实现一个前端路由">
+      Vue Router：如何实现一个前端路由 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="nav-number">1.</span> <span class="nav-text">应用程序初始化</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#1-%E5%88%9B%E5%BB%BAapp%E5%AF%B9%E8%B1%A1"><span class="nav-number">2.</span> <span class="nav-text">1.创建app对象</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A0%B8%E5%BF%83%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B%EF%BC%9A%E5%88%9B%E5%BB%BA-vnode-%E5%92%8C%E6%B8%B2%E6%9F%93-vnode"><span class="nav-number"></span> <span class="nav-text">核心渲染流程：创建 vnode 和渲染 vnode</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-%E5%88%9B%E5%BB%BAvnode"><span class="nav-number">1.</span> <span class="nav-text">1.创建vnode</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%B8%B2%E6%9F%93vnode"><span class="nav-number">2.</span> <span class="nav-text">渲染vnode</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Choo</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">13</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Choo</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

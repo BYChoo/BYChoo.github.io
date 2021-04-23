@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="按需加载和按需打包区分从技术角度介绍按需加载概念前，我们需要先和另外一个概念：按需打包，进行区分。事实上，当前社区对于按需加载和按需打包并没有一个准确的命名伤的划分约定。因此从两者命名上，难以区分其实际含义。 其实，按需加载表示代码模块在交互需要时，动态引入；而按需打包针对第三方依赖库，及业务模块，只打包真正在运行时可能会需要的代码。 我们不妨先说明按需打包的概念和实施方法，目前按需打包一般通过两">
+<meta property="og:type" content="article">
+<meta property="og:title" content="代码拆分和按需加载">
+<meta property="og:url" content="http://example.com/2021/04/23/%E4%BB%A3%E7%A0%81%E6%8B%86%E5%88%86%E5%92%8C%E6%8C%89%E9%9C%80%E5%8A%A0%E8%BD%BD/index.html">
+<meta property="og:site_name" content="Choo&#39;blog">
+<meta property="og:description" content="按需加载和按需打包区分从技术角度介绍按需加载概念前，我们需要先和另外一个概念：按需打包，进行区分。事实上，当前社区对于按需加载和按需打包并没有一个准确的命名伤的划分约定。因此从两者命名上，难以区分其实际含义。 其实，按需加载表示代码模块在交互需要时，动态引入；而按需打包针对第三方依赖库，及业务模块，只打包真正在运行时可能会需要的代码。 我们不妨先说明按需打包的概念和实施方法，目前按需打包一般通过两">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-04-23T10:14:13.000Z">
+<meta property="article:modified_time" content="2021-04-23T10:14:24.811Z">
+<meta property="article:author" content="Choo">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2021/04/23/%E4%BB%A3%E7%A0%81%E6%8B%86%E5%88%86%E5%92%8C%E6%8C%89%E9%9C%80%E5%8A%A0%E8%BD%BD/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>代码拆分和按需加载 | Choo'blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Choo'blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/04/23/%E4%BB%A3%E7%A0%81%E6%8B%86%E5%88%86%E5%92%8C%E6%8C%89%E9%9C%80%E5%8A%A0%E8%BD%BD/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Choo">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Choo'blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          代码拆分和按需加载
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-04-23 18:14:13 / 修改时间：18:14:24" itemprop="dateCreated datePublished" datetime="2021-04-23T18:14:13+08:00">2021-04-23</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="按需加载和按需打包区分"><a href="#按需加载和按需打包区分" class="headerlink" title="按需加载和按需打包区分"></a>按需加载和按需打包区分</h3><p>从技术角度介绍按需加载概念前，我们需要先和另外一个概念：<strong>按需打包</strong>，进行区分。事实上，当前社区对于按需加载和按需打包并没有一个准确的命名伤的划分约定。因此从两者命名上，难以区分其实际含义。</p>
+<p>其实，按需加载表示代码模块在交互需要时，动态引入；而按需打包针对第三方依赖库，及业务模块，只打包真正在运行时可能会需要的代码。</p>
+<p>我们不妨先说明按需打包的概念和实施方法，目前按需打包一般通过两种方式进行：</p>
+<ul>
+<li>使用ES Module 支持的 Tree Shaking方案，在使用构建工具打包时，完成按需打包；</li>
+<li>使用以babel-plugin-import为主的Babel插件，实现自动按需打包；</li>
+</ul>
+<p>**Tres Shaking实现按需打包</p>
+<p>来看一个场景，假设业务中使用 antd 导出来的内容。假设应用中并没有使用 antd 提供的TimePicker组件，那么对于打包结果来说，无疑增加了代码体积。在这种情况下，如果组件库提供了ES Module版本，并开启 Tree Shaking，我们就可以通过“摇树”特性，将不会被使用的代码在构建阶段排除</p>
+<p>Webpack 可以在 package.json 中设置sideEffects: false</p>
+<h3 id="学习编写Babel插件，实现按需打包"><a href="#学习编写Babel插件，实现按需打包" class="headerlink" title="学习编写Babel插件，实现按需打包"></a>学习编写Babel插件，实现按需打包</h3><p>如果第三方库不支持 Tree Shaking，我们依然可以通过 Babel 插件，改变业务代码中对模块的引用路径来实现按需打包。</p>
+<p>比如 babel-plugin-import 这个插件，它是 antd 团队推出的一个 Babel 插件，我们通过一个例子来理解它的原理，比如：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123;Button <span class="keyword">as</span> Btn,Input,TimePicker,ConfigProvider,Haaaa&#125; <span class="keyword">from</span> <span class="string">&#x27;antd&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>这样代码就可以被编译为</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> _ConfigProvider <span class="keyword">from</span> <span class="string">&quot;antd/lib/config-provider&quot;</span>;</span><br><span class="line"><span class="keyword">import</span> _Button <span class="keyword">from</span> <span class="string">&quot;antd/lib/button&quot;</span>;</span><br><span class="line"><span class="keyword">import</span> _Input <span class="keyword">from</span> <span class="string">&quot;antd/lib/input&quot;</span>;</span><br><span class="line"><span class="keyword">import</span> _TimePicker <span class="keyword">from</span> <span class="string">&quot;antd/lib/time-picker&quot;</span>;</span><br></pre></td></tr></table></figure>
+
+<p>编写一个类似的Babel插件也不是难事，Babel插件核心以来于对AST的解析和依赖。<strong>它本质上就是一个函数，在Babel 对 AST 语法树进行转换的过程中介入，通过相应的操作，最终让生成的结果发生改变</strong></p>
+<p>Babel已经内置了几个核心分析，操作AST的工具集，Babel插件通过观察者 + 访问者模式，对AST节点统一遍历，因此具备了酿好的拓展性和灵活性，比如这段代码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">import &#123;Button as Btn, Input&#125; from &#39;antd&#39;</span><br></pre></td></tr></table></figure>
+
+<p>这样的代码，经过 Babel AST 分析后，得到结构：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;ImportDeclaration&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;specifiers&quot;</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;ImportSpecifier&quot;</span>,</span><br><span class="line">            <span class="attr">&quot;imported&quot;</span>: &#123;</span><br><span class="line">                <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;Identifier&quot;</span>,</span><br><span class="line">                <span class="attr">&quot;loc&quot;</span>: &#123;</span><br><span class="line">                    <span class="attr">&quot;identifierName&quot;</span>: <span class="string">&quot;Button&quot;</span></span><br><span class="line">                &#125;,</span><br><span class="line">                <span class="attr">&quot;name&quot;</span>: <span class="string">&quot;Button&quot;</span></span><br><span class="line">            &#125;,</span><br><span class="line">            <span class="attr">&quot;importKind&quot;</span>: <span class="literal">null</span>,</span><br><span class="line">            <span class="attr">&quot;local&quot;</span>: &#123;</span><br><span class="line">                <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;Identifier&quot;</span>,</span><br><span class="line">                <span class="attr">&quot;loc&quot;</span>: &#123;</span><br><span class="line">                    <span class="attr">&quot;identifierName&quot;</span>: <span class="string">&quot;Btn&quot;</span></span><br><span class="line">                &#125;,</span><br><span class="line">                <span class="attr">&quot;name&quot;</span>: <span class="string">&quot;Btn&quot;</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;ImportSpecifier&quot;</span>,</span><br><span class="line">            <span class="attr">&quot;imported&quot;</span>: &#123;</span><br><span class="line">                <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;Identifier&quot;</span>,</span><br><span class="line">                <span class="attr">&quot;loc&quot;</span>: &#123;</span><br><span class="line">                    <span class="attr">&quot;identifierName&quot;</span>: <span class="string">&quot;Input&quot;</span></span><br><span class="line">                &#125;,</span><br><span class="line">                <span class="attr">&quot;name&quot;</span>: <span class="string">&quot;Input&quot;</span></span><br><span class="line">            &#125;,</span><br><span class="line">            <span class="attr">&quot;importKind&quot;</span>: <span class="literal">null</span>,</span><br><span class="line">            <span class="attr">&quot;local&quot;</span>: &#123;</span><br><span class="line">                <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;Identifier&quot;</span>,</span><br><span class="line">                <span class="attr">&quot;start&quot;</span>: <span class="number">23</span>,</span><br><span class="line">                <span class="attr">&quot;end&quot;</span>: <span class="number">28</span>,</span><br><span class="line">                <span class="attr">&quot;loc&quot;</span>: &#123;</span><br><span class="line">                    <span class="attr">&quot;identifierName&quot;</span>: <span class="string">&quot;Input&quot;</span></span><br><span class="line">                &#125;,</span><br><span class="line">                <span class="attr">&quot;name&quot;</span>: <span class="string">&quot;Input&quot;</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    ],</span><br><span class="line">    <span class="attr">&quot;importKind&quot;</span>: <span class="string">&quot;value&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;source&quot;</span>: &#123;</span><br><span class="line">        <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;StringLiteral&quot;</span>,</span><br><span class="line">        <span class="attr">&quot;value&quot;</span>: <span class="string">&quot;antd&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>通过上述结构，我们很容易实现遍历 specifiers 属性</p>
+<p>首先通过 <code>buildExpressionHandler</code> 方法对 import 路径进行改写：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">buildExpressionHandler(node, props, path, state) &#123;</span><br><span class="line">    &#x2F;&#x2F; 获取文件</span><br><span class="line">    const file &#x3D; (path &amp;&amp; path.hub &amp;&amp; path.hub.file) || (state &amp;&amp; state.file);</span><br><span class="line">    const &#123; types &#125; &#x3D; this;</span><br><span class="line">    const pluginState &#x3D; this.getPluginState(state);</span><br><span class="line">    &#x2F;&#x2F; 进行遍历</span><br><span class="line">    props.forEach(prop &#x3D;&gt; &#123;</span><br><span class="line">      if (!types.isIdentifier(node[prop])) return;</span><br><span class="line">      if (</span><br><span class="line">        pluginState.specified[node[prop].name] &amp;&amp;</span><br><span class="line">        types.isImportSpecifier(path.scope.getBinding(node[prop].name).path)</span><br><span class="line">      ) &#123;</span><br><span class="line">        &#x2F;&#x2F; 修改路径内容</span><br><span class="line">        node[prop] &#x3D; this.importMethod(pluginState.specified[node[prop].name], file, pluginState); &#x2F;&#x2F; eslint-disable-line</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>buildExpressionHandler 方法依赖 importMethod 方法：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="title">importMethod</span>(<span class="params">methodName, file, pluginState</span>)</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (!pluginState.selectedMethods[methodName]) &#123;</span><br><span class="line">      <span class="keyword">const</span> &#123; style, libraryDirectory &#125; = <span class="built_in">this</span>;</span><br><span class="line">      <span class="comment">// 获取执行方法名</span></span><br><span class="line">      <span class="keyword">const</span> transformedMethodName = <span class="built_in">this</span>.camel2UnderlineComponentName <span class="comment">// eslint-disable-line</span></span><br><span class="line">        ? transCamel(methodName, <span class="string">&#x27;_&#x27;</span>)</span><br><span class="line">        : <span class="built_in">this</span>.camel2DashComponentName</span><br><span class="line">        ? transCamel(methodName, <span class="string">&#x27;-&#x27;</span>)</span><br><span class="line">        : methodName;</span><br><span class="line">      <span class="comment">// 获取相应路径</span></span><br><span class="line">      <span class="keyword">const</span> path = winPath(</span><br><span class="line">        <span class="built_in">this</span>.customName</span><br><span class="line">          ? <span class="built_in">this</span>.customName(transformedMethodName, file)</span><br><span class="line">          : join(<span class="built_in">this</span>.libraryName, libraryDirectory, transformedMethodName, <span class="built_in">this</span>.fileName), <span class="comment">// eslint-disable-line</span></span><br><span class="line">      );</span><br><span class="line">      pluginState.selectedMethods[methodName] = <span class="built_in">this</span>.transformToDefaultImport <span class="comment">// eslint-disable-line</span></span><br><span class="line">        ? addDefault(file.path, path, &#123; <span class="attr">nameHint</span>: methodName &#125;)</span><br><span class="line">        : addNamed(file.path, methodName, path);</span><br><span class="line">      <span class="keyword">if</span> (<span class="built_in">this</span>.customStyleName) &#123;</span><br><span class="line">        <span class="keyword">const</span> stylePath = winPath(<span class="built_in">this</span>.customStyleName(transformedMethodName));</span><br><span class="line">        addSideEffect(file.path, <span class="string">`<span class="subst">$&#123;stylePath&#125;</span>`</span>);</span><br><span class="line">      &#125; <span class="keyword">else</span> <span class="keyword">if</span> (<span class="built_in">this</span>.styleLibraryDirectory) &#123;</span><br><span class="line">        <span class="keyword">const</span> stylePath = winPath(</span><br><span class="line">          join(<span class="built_in">this</span>.libraryName, <span class="built_in">this</span>.styleLibraryDirectory, transformedMethodName, <span class="built_in">this</span>.fileName),</span><br><span class="line">        );</span><br><span class="line">        addSideEffect(file.path, <span class="string">`<span class="subst">$&#123;stylePath&#125;</span>`</span>);</span><br><span class="line">      &#125; <span class="keyword">else</span> <span class="keyword">if</span> (style === <span class="literal">true</span>) &#123;</span><br><span class="line">        addSideEffect(file.path, <span class="string">`<span class="subst">$&#123;path&#125;</span>/style`</span>);</span><br><span class="line">      &#125; <span class="keyword">else</span> <span class="keyword">if</span> (style === <span class="string">&#x27;css&#x27;</span>) &#123;</span><br><span class="line">        addSideEffect(file.path, <span class="string">`<span class="subst">$&#123;path&#125;</span>/style/css`</span>);</span><br><span class="line">      &#125; <span class="keyword">else</span> <span class="keyword">if</span> (<span class="keyword">typeof</span> style === <span class="string">&#x27;function&#x27;</span>) &#123;</span><br><span class="line">        <span class="keyword">const</span> stylePath = style(path, file);</span><br><span class="line">        <span class="keyword">if</span> (stylePath) &#123;</span><br><span class="line">          addSideEffect(file.path, stylePath);</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> &#123; ...pluginState.selectedMethods[methodName] &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>importMethod方法调用了@babel/helper-module-imports中的addSideEffect方法执行路径的转换操作。addSideEffect方法在源码中通过实例化一个 Import Injector，并调用实例方法完成了 AST 转换</p>
+<h3 id="“重新认识”-dynamic-import-动态导入"><a href="#“重新认识”-dynamic-import-动态导入" class="headerlink" title="“重新认识” dynamic import (动态导入)"></a>“重新认识” dynamic import (动态导入)</h3><p><strong>静态导入的性能优劣</strong></p>
+<p>标准用法的 import 属于静态导入，它只支持一个字符串类型的 module specifier（模块路径声明），这样的特性会使所有被 import 的模块在加载时就被编译。从某些角度看，这种做法对于绝大多数场景来说性能是友好的，因为这意味着对工程代码的静态分析成为可能，进而使得类似 tree-shaking 的技术有了应用空间。</p>
+<p>但是对于一些特殊场景，静态导入也可能成为性能的短板，比如，当我们需要：</p>
+<ul>
+<li>按需加载一个模块</li>
+<li>按运行事件选定一个模块</li>
+</ul>
+<p>此时，dynamic import 就变得尤为重要。比如在浏览器，根据用户的系统语言选择加载不同的语言模块，根据用户的操作去加载不同的内容逻辑</p>
+<p>MDN 文档中给出了 dynamic import 更具体的使用场景：</p>
+<ul>
+<li>静态导入的模块很明显降低了代码的加载速度且被使用的可能性很低，或者并不需要马上使用它</li>
+<li>静态导入的模块很明显占用了大量系统内存且被使用的可能性很低</li>
+<li>被导入的模块在加载时并不存在，需要异步获取</li>
+<li>导入模块的说明符，需要动态创建</li>
+<li>被导入的模块有副作用</li>
+</ul>
+<p><em>dynamic import（动态导入）</em>*</p>
+<p>dynamicImport 函数实现如下：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> importModule = <span class="function"><span class="params">url</span> =&gt;</span> &#123;</span><br><span class="line">  <span class="comment">// 返回一个新的 Promise 实例</span></span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function">(<span class="params">resolve, reject</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="comment">// 创建 script 标签</span></span><br><span class="line">    <span class="keyword">const</span> script = <span class="built_in">document</span>.createElement(<span class="string">&quot;script&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> tempGlobal = <span class="string">&quot;__tempModuleLoadingVariable&quot;</span> + <span class="built_in">Math</span>.random().toString(<span class="number">32</span>).substring(<span class="number">2</span>);</span><br><span class="line"></span><br><span class="line">    script.type = <span class="string">&quot;module&quot;</span>;</span><br><span class="line">    script.textContent = <span class="string">`import * as m from &quot;<span class="subst">$&#123;url&#125;</span>&quot;; window.<span class="subst">$&#123;tempGlobal&#125;</span> = m;`</span>;</span><br><span class="line">    <span class="comment">// load 回调</span></span><br><span class="line">    script.onload = <span class="function">() =&gt;</span> &#123;</span><br><span class="line">      resolve(<span class="built_in">window</span>[tempGlobal]);</span><br><span class="line">      <span class="keyword">delete</span> <span class="built_in">window</span>[tempGlobal];</span><br><span class="line">      script.remove();</span><br><span class="line">    &#125;;</span><br><span class="line">    <span class="comment">// error 回调</span></span><br><span class="line">    script.onerror = <span class="function">() =&gt;</span> &#123;</span><br><span class="line">      reject(<span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">&quot;Failed to load module script with URL &quot;</span> + url));</span><br><span class="line">      <span class="keyword">delete</span> <span class="built_in">window</span>[tempGlobal];</span><br><span class="line">      script.remove();</span><br><span class="line">    &#125;;</span><br><span class="line">    <span class="built_in">document</span>.documentElement.appendChild(script);</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里，我们通过动态插入一个 script 标签实现对目标 script url 的加载，并通过将模块导出内容赋值给 window 对象。我们使用__tempModuleLoadingVariable” + Math.random().toString(32).substring(2) key保证模块导出对象的命名不会出现冲突</p>
+<p><strong>Webpack 赋能代码拆分和按需加载</strong></p>
+<p>总的来说，Webpack 提供了三种相关能力：</p>
+<ul>
+<li>通过入口配置分割代码</li>
+<li>动态导入支持</li>
+<li>通过 splitchunk 插件提取公共代码 (公共代码分割)</li>
+</ul>
+<p><strong>Webpack 对 dynamic import 能力支持</strong></p>
+<p>事实上，在 Webpack 早期版本中，提供了 require.ensure() 能力。请注意这是 Webpack 特有的实现：require.ensure() 能够将其参数对应的文件拆分到一个单独的 bundle 中，此 bundle 会被异步加载。</p>
+<p>目前 require.ensure() 已经被符合 ES 规范的 dynamic import 取代。调用 import()，被请求的模块和它引用的所有子模块，会分离到一个单独的 chunk 中。值得学习的是，Webpack 对于 import() 的支持和处理非常“巧妙”，我们知道 ES 中关于 dynamic import 的规范，只接受一个参数，表示模块的路径：</p>
+<p><code>import(</code>${path}<code>) -&gt; Promise</code></p>
+<p>但是 Webpack 是一个构建工具，Webpack 中对于 import() 的处理，可以通过注释接收一些特殊的参数，无须破坏 ES 对于 dynamic import 规定。比如：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span>(</span><br><span class="line">  <span class="comment">/* webpackChunkName: &quot;chunk-name&quot; */</span></span><br><span class="line">  <span class="comment">/* webpackMode: &quot;lazy&quot; */</span></span><br><span class="line">  <span class="string">&#x27;module&#x27;</span></span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/04/23/%E5%88%B6%E5%AE%9A%E4%B8%80%E4%B8%AA%E7%BB%9F%E4%B8%80%E6%A0%87%E5%87%86%E5%8C%96babel-preset/" rel="prev" title="制定一个统一标准化babel-preset">
+      <i class="fa fa-chevron-left"></i> 制定一个统一标准化babel-preset
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/04/23/%E5%B7%A5%E7%A8%8B%E5%8C%96%E6%80%9D%E7%BB%B4%E5%A4%84%E7%90%86%E6%96%B9%E6%A1%88%EF%BC%9A%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E5%BA%94%E7%94%A8%E4%B8%BB%E9%A2%98%E5%88%87%E6%8D%A2%E5%8A%9F%E8%83%BD/" rel="next" title="工程化思维处理方案：如何实现应用主题切换功能">
+      工程化思维处理方案：如何实现应用主题切换功能 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8C%89%E9%9C%80%E5%8A%A0%E8%BD%BD%E5%92%8C%E6%8C%89%E9%9C%80%E6%89%93%E5%8C%85%E5%8C%BA%E5%88%86"><span class="nav-number">1.</span> <span class="nav-text">按需加载和按需打包区分</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AD%A6%E4%B9%A0%E7%BC%96%E5%86%99Babel%E6%8F%92%E4%BB%B6%EF%BC%8C%E5%AE%9E%E7%8E%B0%E6%8C%89%E9%9C%80%E6%89%93%E5%8C%85"><span class="nav-number">2.</span> <span class="nav-text">学习编写Babel插件，实现按需打包</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E2%80%9C%E9%87%8D%E6%96%B0%E8%AE%A4%E8%AF%86%E2%80%9D-dynamic-import-%E5%8A%A8%E6%80%81%E5%AF%BC%E5%85%A5"><span class="nav-number">3.</span> <span class="nav-text">“重新认识” dynamic import (动态导入)</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Choo</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">13</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Choo</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

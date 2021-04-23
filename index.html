@@ -118,11 +118,6 @@
     <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
 
   </li>
-        <li class="menu-item menu-item-categories">
-
-    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
-
-  </li>
         <li class="menu-item menu-item-archives">
 
     <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
@@ -155,7 +150,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2021/04/23/Yarn%E7%9A%84%E5%AE%89%E8%A3%85%E7%90%86%E5%BF%B5/">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/04/23/%E6%9F%AF%E9%87%8C%E5%8C%96/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -169,7 +164,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2021/04/23/Yarn%E7%9A%84%E5%AE%89%E8%A3%85%E7%90%86%E5%BF%B5/" class="post-title-link" itemprop="url">Yarn的安装理念</a>
+            <a href="/2021/04/23/%E6%9F%AF%E9%87%8C%E5%8C%96/" class="post-title-link" itemprop="url">柯里化</a>
         </h2>
 
         <div class="post-meta">
@@ -180,7 +175,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2021-04-23 17:06:24 / 修改时间：17:06:43" itemprop="dateCreated datePublished" datetime="2021-04-23T17:06:24+08:00">2021-04-23</time>
+              <time title="创建时间：2021-04-23 18:23:39 / 修改时间：18:23:49" itemprop="dateCreated datePublished" datetime="2021-04-23T18:23:39+08:00">2021-04-23</time>
             </span>
 
           
@@ -194,25 +189,32 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>当npm还处在v3阶段时，一个叫做Yarn的包管理方案横空出世。2016年，npm 还没有 package-lock.json 文件，安装速度很慢，稳定性也较差，而 Yarn 的理念很好地解决了以下问题。</p>
-<ul>
-<li><strong>确定性</strong>：通过yarn.lock等机制，保证了确定性。即不管安装顺序如何，相同的以来关系在任何机器和环境下，都可以以相同的方式被安装（在npm5之前，没有package-lock.json机制，只有默认并不会使用的npm=shrinkwrap.json）</li>
-<li><strong>采用模块扁平安装模式</strong>：将依赖包的不同版本，按照一定策略，归结为单个版本，以避免创建多个副本造成冗余</li>
-<li><strong>网络性能更好</strong>：Yarn采用了请求排队的理念，类似并发连接池，能够更好地利用网络资源；同时引入了更好的安装失败时的重试机制</li>
-<li><strong>采用缓存机制</strong>，实现了离线模式(npm目前也有类似实现)</li>
-</ul>
-<p>该结构整体和package-lock.json结构类似，只不过yarn.lock并没有使用JSON格式，而是采用了一种自定义的标记格式，新的格式仍然保持了较高的可读性。</p>
-<p>相比npm，yarn另外一个显著区别是yarn.lock中自以来的版本号不是固定版本。这就说明单独一个yarn.lock确定不了node_modules目录结构，还需要和package.json文件进行配合</p>
-<h3 id="Yarn-安装机制和背后思想"><a href="#Yarn-安装机制和背后思想" class="headerlink" title="Yarn 安装机制和背后思想"></a>Yarn 安装机制和背后思想</h3><p>简单来说，Yarn 的安装过程主要有以下 5 大步骤：<br>检测(checking) =&gt; 解析包(resolving packges) =&gt; 获取包(fetching packages) =&gt; 链接包(linking packages) =&gt; 构建包(building packages)</p>
-<h4 id="检测包"><a href="#检测包" class="headerlink" title="检测包"></a>检测包</h4><p>这一步主要是检测项目中是否存在一些npm相关文件，比如package-lock.json等。如果有，会提示用户注意：这些文件的存在可能会导致冲突。</p>
-<h4 id="解析包"><a href="#解析包" class="headerlink" title="解析包"></a>解析包</h4><p>这一步会解析依赖树中每一个包的版本信息<br>首先获取当前项目中package.json定义的dependencies、devDependencies、optionalDependencies 的内容，这属于首层依赖<br>接着采用遍历首层以来的方式获取依赖包的版本信息，以及递归查找每个依赖下潜逃的版本信息，并将解析过和正在解析的包用一个Set数据结构来存储，这样就能保证同一个保本范围内的包不会被重复解析。<br>• 对于没有解析过的包A，首次尝试从yarn.lock中获取到版本信息，并标记为已解析<br>• 如果在Yarn.lock中没有找到包A，则向Registry发起请求获取满足版本范围的已知最高版本的包信息，获取后将当前包标记为一解析。</p>
-<h4 id="获取包"><a href="#获取包" class="headerlink" title="获取包"></a>获取包</h4><p>这一步我们首先需要检查缓存中是否存在当前的依赖包，同时将混存中不存在的依赖包下载到缓存目录。</p>
-<h4 id="链接包"><a href="#链接包" class="headerlink" title="链接包"></a>链接包</h4><p>上一步是将依赖下载到缓存目录，这一步是将项目中的依赖复制到项目node_modules下，同时遵循扁平化原则。在复制依赖前，yarn会先解析peerDependencies，如果找不到符合peerDependencies 的包，则进行warning提示，并最终拷贝依赖到项目中。</p>
-<h4 id="构建包"><a href="#构建包" class="headerlink" title="构建包"></a>构建包</h4><p>如果依赖包中存在二进制包需要进行编译，会在这一步进行</p>
-<h3 id="破解依赖管理困境"><a href="#破解依赖管理困境" class="headerlink" title="破解依赖管理困境"></a>破解依赖管理困境</h3><p>早起npm的设计非常简单，在安装依赖时将依赖放到项目的node_modules文件中；同时如果某个直接依赖A还依赖其他模块B，作为间接依赖，模块B将会被下载到A的node_modules文件夹中， 依此递归执行，最终形成了一颗巨大的依赖模块树。<br>这样的 node_modules 结构，的确简单明了、符合预期，但对大型项目在某些方面却不友好，比如可能有很多重复的依赖包，而且会形成“嵌套地狱”。<br>那么如何理解“嵌套地狱”呢？</p>
-<p>• 项目依赖树的层级非常深，不利于调试和排查问题<br>• 依赖树的不同分支里，可能存在同样版本的相同依赖。比如直接依赖A和B，但A和B都依赖相同版本的模块C，那么C会重复出现在A和B的node_modules中</p>
-<p>这种重复问题使得安装结果浪费了较大的空间资源，也使得安装过程过慢，甚至会因为目录级层太深导致路径太长，最终在windows系统下删除node_modules文件夹出现失败情况。</p>
-<p>因此，npm v3版本之后，nodu_modules的结构改成了扁平结构</p>
+          <h4 id="不可或缺的curry"><a href="#不可或缺的curry" class="headerlink" title="不可或缺的curry"></a>不可或缺的curry</h4><p>curry的概念很简单：只传递给函数一部分参数来调用它，让它返回一个函数去处理剩下的参数、</p>
+<p>你可以一次性地调用curry函数，也可以每次只传一个参数分多次调用</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> add = <span class="function"><span class="keyword">function</span>(<span class="params">x</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="function"><span class="keyword">function</span>(<span class="params">y</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> x + y;</span><br><span class="line">  &#125;;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> increment = add(<span class="number">1</span>);</span><br><span class="line"><span class="keyword">var</span> addTen = add(<span class="number">10</span>);</span><br><span class="line"></span><br><span class="line">increment(<span class="number">2</span>);</span><br><span class="line"><span class="comment">// 3</span></span><br><span class="line"></span><br><span class="line">addTen(<span class="number">2</span>);</span><br><span class="line"><span class="comment">// 12</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>这里我们定义了一个 add 函数，它接受一个参数并返回一个新的函数。调用 add 之后，返回的函数就通过闭包的方式记住了 add 的第一个参数。一次性地调用它实在是有点繁琐，好在我们可以使用一个特殊的 curry 帮助函数使这类函数的定义和调用更加容易。</p>
+<p>下面是一下curry函数：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> curry = <span class="built_in">require</span>(<span class="string">&#x27;lodash&#x27;</span>).curry;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> match = curry(<span class="function"><span class="keyword">function</span>(<span class="params">what, str</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> str.match(what);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> replace = curry(<span class="function"><span class="keyword">function</span>(<span class="params">what, replacement, str</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> str.replace(what, replacement);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> filter = curry(<span class="function"><span class="keyword">function</span>(<span class="params">f, ary</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> ary.filter(f);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> map = curry(<span class="function"><span class="keyword">function</span>(<span class="params">f, ary</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> ary.map(f);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>我在上面的代码中遵循的是一种简单，同时也非常重要的模式。即策略性地把要操作的数据（String， Array）放到最后一个参数里。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">match(<span class="regexp">/\s+/g</span>, <span class="string">&quot;hello world&quot;</span>);</span><br><span class="line"><span class="comment">// [ &#x27; &#x27; ]</span></span><br><span class="line"></span><br><span class="line">match(<span class="regexp">/\s+/g</span>)(<span class="string">&quot;hello world&quot;</span>);</span><br><span class="line"><span class="comment">// [ &#x27; &#x27; ]</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> hasSpaces = match(<span class="regexp">/\s+/g</span>);</span><br><span class="line"><span class="comment">// function(x) &#123; return x.match(/\s+/g) &#125;</span></span><br><span class="line"></span><br><span class="line">hasSpaces(<span class="string">&quot;hello world&quot;</span>);</span><br><span class="line"><span class="comment">// [ &#x27; &#x27; ]</span></span><br><span class="line"></span><br><span class="line">hasSpaces(<span class="string">&quot;spaceless&quot;</span>);</span><br><span class="line"><span class="comment">// null</span></span><br><span class="line"></span><br><span class="line">filter(hasSpaces, [<span class="string">&quot;tori_spelling&quot;</span>, <span class="string">&quot;tori amos&quot;</span>]);</span><br><span class="line"><span class="comment">// [&quot;tori amos&quot;]</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> findSpaces = filter(hasSpaces);</span><br><span class="line"><span class="comment">// function(xs) &#123; return xs.filter(function(x) &#123; return x.match(/\s+/g) &#125;) &#125;</span></span><br><span class="line"></span><br><span class="line">findSpaces([<span class="string">&quot;tori_spelling&quot;</span>, <span class="string">&quot;tori amos&quot;</span>]);</span><br><span class="line"><span class="comment">// [&quot;tori amos&quot;]</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> noVowels = replace(<span class="regexp">/[aeiou]/ig</span>);</span><br><span class="line"><span class="comment">// function(replacement, x) &#123; return x.replace(/[aeiou]/ig, replacement) &#125;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> censored = noVowels(<span class="string">&quot;*&quot;</span>);</span><br><span class="line"><span class="comment">// function(x) &#123; return x.replace(/[aeiou]/ig, &quot;*&quot;) &#125;</span></span><br><span class="line"></span><br><span class="line">censored(<span class="string">&quot;Chocolate Rain&quot;</span>);</span><br><span class="line"><span class="comment">// &#x27;Ch*c*l*t* R**n&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>这里表明的是一种“预加载”函数的能力，通过传递一到两个参数调用函数，就能得到一个记住了这些参数的新函数。</p>
+<p>个人觉得：“柯里化”就像某些官员的把戏，官员要弄7个老婆，碍于国策（一夫一妻）以及年老弟衰，表面上就1个老婆，实际上剩下的6个暗地里消化。代码表示就是：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> currying = <span class="function"><span class="keyword">function</span>(<span class="params">fn</span>) </span>&#123;</span><br><span class="line">    <span class="comment">// fn 指官员消化老婆的手段</span></span><br><span class="line">    <span class="keyword">var</span> args = [].slice.call(<span class="built_in">arguments</span>, <span class="number">1</span>);</span><br><span class="line">    <span class="comment">// args 指的是那个合法老婆</span></span><br><span class="line">    <span class="keyword">return</span> <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="comment">// 已经有的老婆和新搞定的老婆们合成一体，方便控制</span></span><br><span class="line">        <span class="keyword">var</span> newArgs = args.concat([].slice.call(<span class="built_in">arguments</span>));</span><br><span class="line">        <span class="comment">// 这些老婆们用 fn 这个手段消化利用，完成韦小宝前辈的壮举并返回</span></span><br><span class="line">        <span class="keyword">return</span> fn.apply(<span class="literal">null</span>, newArgs);</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 下为官员如何搞定7个老婆的测试</span></span><br><span class="line"><span class="comment">// 获得合法老婆</span></span><br><span class="line"><span class="keyword">var</span> getWife = currying(<span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> allWife = [].slice.call(<span class="built_in">arguments</span>);</span><br><span class="line">    <span class="comment">// allwife 就是所有的老婆的，包括暗渡陈仓进来的老婆</span></span><br><span class="line">    <span class="built_in">console</span>.log(allWife.join(<span class="string">&quot;;&quot;</span>));</span><br><span class="line">&#125;, <span class="string">&quot;合法老婆&quot;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 获得其他6个老婆</span></span><br><span class="line">getWife(<span class="string">&quot;大老婆&quot;</span>,<span class="string">&quot;小老婆&quot;</span>,<span class="string">&quot;俏老婆&quot;</span>,<span class="string">&quot;刁蛮老婆&quot;</span>,<span class="string">&quot;乖老婆&quot;</span>,<span class="string">&quot;送上门老婆&quot;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 换一批老婆</span></span><br><span class="line">getWife(<span class="string">&quot;超越韦小宝的老婆&quot;</span>);</span><br></pre></td></tr></table></figure>
+
+<h3 id="柯里化的作用"><a href="#柯里化的作用" class="headerlink" title="柯里化的作用"></a>柯里化的作用</h3><h4 id="参数复用"><a href="#参数复用" class="headerlink" title="参数复用"></a>参数复用</h4><p>参数复用”上面已经展示过了，官员老婆的例子就是，无论哪个官员，都是需要一个合法老婆；通过柯里化过程，getWife()无需添加这个多余的“合法老婆”参数</p>
+<h4 id="提前返回"><a href="#提前返回" class="headerlink" title="提前返回"></a>提前返回</h4><p>“提前返回”，很常见的一个例子，兼容现代浏览器以及IE浏览器的事件添加方法。我们正常情况可能会这样写：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> addEvent = <span class="function"><span class="keyword">function</span>(<span class="params">el, type, fn, capture</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">window</span>.addEventListener) &#123;</span><br><span class="line">        el.addEventListener(type, <span class="function"><span class="keyword">function</span>(<span class="params">e</span>) </span>&#123;</span><br><span class="line">            fn.call(el, e);</span><br><span class="line">        &#125;, capture);</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (<span class="built_in">window</span>.attachEvent) &#123;</span><br><span class="line">        el.attachEvent(<span class="string">&quot;on&quot;</span> + type, <span class="function"><span class="keyword">function</span>(<span class="params">e</span>) </span>&#123;</span><br><span class="line">            fn.call(el, e);</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125; </span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>上面的方法有什么问题呢？很显然，我们每次使用addEvent为元素添加事件的时候，(eg. IE6/IE7)都会走一遍if…else if …，其实只要一次判定就可以了，怎么做？–柯里化。改为下面这样子的代码：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> addEvent = (<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">window</span>.addEventListener) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="function"><span class="keyword">function</span>(<span class="params">el, sType, fn, capture</span>) </span>&#123;</span><br><span class="line">            el.addEventListener(sType, <span class="function"><span class="keyword">function</span>(<span class="params">e</span>) </span>&#123;</span><br><span class="line">                fn.call(el, e);</span><br><span class="line">            &#125;, (capture));</span><br><span class="line">        &#125;;</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (<span class="built_in">window</span>.attachEvent) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="function"><span class="keyword">function</span>(<span class="params">el, sType, fn, capture</span>) </span>&#123;</span><br><span class="line">            el.attachEvent(<span class="string">&quot;on&quot;</span> + sType, <span class="function"><span class="keyword">function</span>(<span class="params">e</span>) </span>&#123;</span><br><span class="line">                fn.call(el, e);</span><br><span class="line">            &#125;);</span><br><span class="line">        &#125;;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;)();</span><br></pre></td></tr></table></figure>
+
+<p>初始addEvent的执行其实值实现了部分的应用（只有一次的if…else if…判定），而剩余的参数应用都是其返回函数实现的，典型的柯里化。</p>
+<h4 id="延迟执行"><a href="#延迟执行" class="headerlink" title="延迟执行"></a>延迟执行</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">Function</span>.prototype.bind = <span class="function"><span class="keyword">function</span> (<span class="params">context</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> _this = <span class="built_in">this</span></span><br><span class="line">    <span class="keyword">var</span> args = <span class="built_in">Array</span>.prototype.slice.call(<span class="built_in">arguments</span>, <span class="number">1</span>)</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">return</span> <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> _this.apply(context, args)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>像我们js中经常使用的bind，实现的机制就是Currying.</p>
 
       
     </div>
@@ -232,7 +234,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2021/04/23/npm%E5%AE%89%E8%A3%85%E6%9C%BA%E5%88%B6/">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/04/23/%E7%BA%AF%E5%87%BD%E6%95%B0%E7%9A%84%E5%A5%BD%E5%A4%84/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -246,7 +248,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2021/04/23/npm%E5%AE%89%E8%A3%85%E6%9C%BA%E5%88%B6/" class="post-title-link" itemprop="url">npm安装机制</a>
+            <a href="/2021/04/23/%E7%BA%AF%E5%87%BD%E6%95%B0%E7%9A%84%E5%A5%BD%E5%A4%84/" class="post-title-link" itemprop="url">纯函数的好处</a>
         </h2>
 
         <div class="post-meta">
@@ -257,7 +259,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2021-04-23 17:03:54 / 修改时间：17:04:18" itemprop="dateCreated datePublished" datetime="2021-04-23T17:03:54+08:00">2021-04-23</time>
+              <time title="创建时间：2021-04-23 18:22:49 / 修改时间：18:23:23" itemprop="dateCreated datePublished" datetime="2021-04-23T18:22:49+08:00">2021-04-23</time>
             </span>
 
           
@@ -271,21 +273,945 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>npm 的安装机制非常值得探究。Ruby 的 Gem、Python 的 pip 都是全局安装，但是 npm 的安装机制秉承了不同的设计哲学。</p>
-<p>它会优先安装依赖包到当前项目目录，使得不同应用项目的依赖各成体系，同时还减轻了包作者的 API 兼容性压力，但这样做的缺陷也很明显：如果我们的项目 A 和项目 B，都依赖了相同的公共库 C，那么公共库 C 一般都会在项目 A 和项目 B 中，各被安装一次。这就说明，同一个依赖包可能在我们的电脑上进行多次安装</p>
-<p><img src="https://cdn.nlark.com/yuque/0/2021/png/259122/1613704838111-c7c28cf3-b44c-4da7-8743-f11ba801bfe0.png" alt="描述"></p>
-<p>npm install 执行之后，首先检查并获取npm配置，这里的优先级为：项目级的.npmrc文件&gt;用户级的.npmrc文件&gt;全局级的.npmrc文件&gt;npm内置的.npmrc文件</p>
-<p>然后检查项目中是否有package-lock.json文件<br>如果有，则检查package-lock.json和package.json中声明的以来是否一致<br>• 一致，直接使用package-lock.json中的信息，从缓存或网络资源中加载以来<br>• 不一致，按照npm版本进行处理</p>
-<p>如果没有，则根据package.json递归构建依赖树。然后按照构建好的依赖树下载完整的依赖资源，在下载时就会检查是否存在相关的资源缓存</p>
-<p>构建依赖树时，当前依赖项目不管其是直接以来还是子依赖的依赖，都应该按照扁平化原则，优先将其放置在node_module根目录。在这个过程中，遇到相同模块就判断已放置在依赖树中的模块版本是否符合新模块的版本范围，如果符合则跳过；不符合则在当前模块的node_modules下放置该模块</p>
-<p>前端工程中，依赖嵌套依赖，一个中型项目中 node_moduels 安装包可能就已经是海量的了。如果安装包每次都通过网络下载获取，无疑会增加安装时间成本。对于这个问题，缓存始终是一个好的解决思路，我们接下来看看 npm 自己的缓存机制。</p>
-<h3 id="npm-缓存机制"><a href="#npm-缓存机制" class="headerlink" title="npm 缓存机制"></a>npm 缓存机制</h3><p>对于一个依赖包的同一版本本地化缓存，是当代依赖包管理工具的一个常见设计。使用时要先执行一下命令：<br><code>npm config get cache</code></p>
-<p>得到配置缓存的根目录在/Users/User/.npm当中。进入这个文件夹可以发现_cacache文件。事实上，在npm v5版本之后，混存数据均放在根目录中的_cache文件夹中</p>
-<p>接下来打开_cacache文件，看看 npm 缓存了哪些东西，一共有 3 个目录：<br>• content-v2<br>• index-v5<br>• tmp</p>
-<p>其中 content-v2 里面基本都是一些二进制文件。为了使这些二进制文件可读，我们把二进制文件的扩展名改为 .tgz，然后进行解压，得到的结果其实就是我们的 npm 包资源。</p>
-<p>而 index-v5 文件中，我们采用跟刚刚一样的操作就可以获得一些描述性的文件，事实上这些内容就是 content-v2 里文件的索引。</p>
-<h3 id="npm-多源镜像和企业级部署私服原理"><a href="#npm-多源镜像和企业级部署私服原理" class="headerlink" title="npm 多源镜像和企业级部署私服原理"></a>npm 多源镜像和企业级部署私服原理</h3><p>虽然 npm 并没有被屏蔽，但是下载第三方依赖包的速度依然较缓慢，这严重影响 CI/CD 流程或本地开发效率。部署镜像后，一般可以确保高速、稳定的 npm 服务，而且使发布私有模块更加安全。除此之外，审核机制也可以保障私服上的 npm 模块质量和安全。</p>
-<h3 id="那么，如何部署一个私有-npm-镜像呢？"><a href="#那么，如何部署一个私有-npm-镜像呢？" class="headerlink" title="那么，如何部署一个私有 npm 镜像呢？"></a>那么，如何部署一个私有 npm 镜像呢？</h3><p>现在社区上主要有 3 种工具来搭建 npm 私服：nexus、verdaccio 以及 cnpm。</p>
+          <h4 id="纯函数的概念"><a href="#纯函数的概念" class="headerlink" title="纯函数的概念"></a>纯函数的概念</h4><blockquote>
+<p>纯函数是这样一种函数，即相同的输入，永远会得到相同的输出，而且没有任何可观察的副作用</p>
+</blockquote>
+<p>比如 <strong>slice</strong> 和 <strong>splice</strong>，这两个函数的作用并无二致——但是注意，它们各自的方式却大不同，但不管怎么说作用还是一样的。我们说 <strong>slice</strong> 符合纯函数的定义是因为对相同的输入它保证能返回相同的输出。而 <strong>splice</strong> 却会嚼烂调用它的那个数组，然后再吐出来；这就会产生可观察到的副作用，即这个数组永久地改变了</p>
+<p>在函数式编程中，我们讨厌这种会改变数据的笨函数。我们追求的是那种可靠的，每次都能返回同样结果的函数，而不是像 splice 这样每次调用后都把数据弄得一团糟的函数，这不是我们想要的。</p>
+<p>来看看另一个例子。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 不纯的</span></span><br><span class="line"><span class="keyword">var</span> minimum = <span class="number">21</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> checkAge = <span class="function"><span class="keyword">function</span>(<span class="params">age</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> age &gt;= minimum;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">// 纯的</span></span><br><span class="line"><span class="keyword">var</span> checkAge = <span class="function"><span class="keyword">function</span>(<span class="params">age</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">var</span> minimum = <span class="number">21</span>;</span><br><span class="line">  <span class="keyword">return</span> age &gt;= minimum;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>在不纯的版本中，checkAge 的结果将取决于 minimum 这个可变变量的值。换句话说，它取决于系统状态（system state）；这一点令人沮丧，因为它引入了外部的环境，从而增加了认知负荷（cognitive load）。</p>
+<h3 id="追求纯的理由"><a href="#追求纯的理由" class="headerlink" title="追求纯的理由"></a>追求纯的理由</h3><h4 id="可缓存性-Cacheable"><a href="#可缓存性-Cacheable" class="headerlink" title="可缓存性 (Cacheable)"></a>可缓存性 (Cacheable)</h4><p>首先，纯函数总能够根据输入来做缓存。实现缓存的一种典型方式是 memoize 技术:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> memoize = <span class="function"><span class="keyword">function</span>(<span class="params">f</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">var</span> cache = &#123;&#125;;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> arg_str = <span class="built_in">JSON</span>.stringify(<span class="built_in">arguments</span>);</span><br><span class="line">    cache[arg_str] = cache[arg_str] || f.apply(f, <span class="built_in">arguments</span>);</span><br><span class="line">    <span class="keyword">return</span> cache[arg_str];</span><br><span class="line">  &#125;;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> squareNumber  = memoize(<span class="function"><span class="keyword">function</span>(<span class="params">x</span>)</span>&#123; <span class="keyword">return</span> x*x; &#125;);</span><br><span class="line"></span><br><span class="line">squareNumber(<span class="number">4</span>);</span><br><span class="line"><span class="comment">//=&gt; 16</span></span><br><span class="line"></span><br><span class="line">squareNumber(<span class="number">4</span>); <span class="comment">// 从缓存中读取输入值为 4 的结果</span></span><br><span class="line"><span class="comment">//=&gt; 16</span></span><br><span class="line"></span><br><span class="line">squareNumber(<span class="number">5</span>);</span><br><span class="line"><span class="comment">//=&gt; 25</span></span><br><span class="line"></span><br><span class="line">squareNumber(<span class="number">5</span>); <span class="comment">// 从缓存中读取输入值为 5 的结果</span></span><br><span class="line"><span class="comment">//=&gt; 25</span></span><br></pre></td></tr></table></figure>
+
+<p>值得注意的一点是，可以通过延迟执行的方式把不纯的函数转换为纯函数：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> pureHttpCall = memoize(<span class="function"><span class="keyword">function</span>(<span class="params">url, params</span>)</span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123; <span class="keyword">return</span> $.getJSON(url, params); &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<h4 id="可移植性-自文档化"><a href="#可移植性-自文档化" class="headerlink" title="可移植性/自文档化"></a>可移植性/自文档化</h4><p>纯函数是完全自给自足的，它需要的所有东西都能轻易获得。更易于观察和理解，没有偷偷摸摸的小动作。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 不纯的</span></span><br><span class="line"><span class="keyword">var</span> signUp = <span class="function"><span class="keyword">function</span>(<span class="params">attrs</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">var</span> user = saveUser(attrs);</span><br><span class="line">  welcomeUser(user);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> saveUser = <span class="function"><span class="keyword">function</span>(<span class="params">attrs</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> user = Db.save(attrs);</span><br><span class="line">    ...</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> welcomeUser = <span class="function"><span class="keyword">function</span>(<span class="params">user</span>) </span>&#123;</span><br><span class="line">    Email(user, ...);</span><br><span class="line">    ...</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 纯的</span></span><br><span class="line"><span class="keyword">var</span> signUp = <span class="function"><span class="keyword">function</span>(<span class="params">Db, Email, attrs</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> user = saveUser(Db, attrs);</span><br><span class="line">    welcomeUser(Email, user);</span><br><span class="line">  &#125;;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> saveUser = <span class="function"><span class="keyword">function</span>(<span class="params">Db, attrs</span>) </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> welcomeUser = <span class="function"><span class="keyword">function</span>(<span class="params">Email, user</span>) </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>这个例子表明，纯函数对于其依赖必须要诚实，这样我们就能知道它的目的。仅从纯函数版本的 signUp 的签名就可以看出，它将要用到 <code>Db</code>、<code>Email</code>和 <code>attrs</code>，这在最小程度上给了我们足够多的信息</p>
+<h4 id="可测试性"><a href="#可测试性" class="headerlink" title="可测试性"></a>可测试性</h4><p>纯函数让测试更加容易。我们不需要伪造一个“真实的”支付网关，或者每一次测试之前都要配置、之后都要断言状态（assert the state）。只需简单地给函数一个输入，然后断言输出就好了。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/04/23/Vue-Router%EF%BC%9A%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E5%89%8D%E7%AB%AF%E8%B7%AF%E7%94%B1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Choo">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Choo'blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/04/23/Vue-Router%EF%BC%9A%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E5%89%8D%E7%AB%AF%E8%B7%AF%E7%94%B1/" class="post-title-link" itemprop="url">Vue Router：如何实现一个前端路由</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-04-23 18:21:55 / 修改时间：18:22:13" itemprop="dateCreated datePublished" datetime="2021-04-23T18:21:55+08:00">2021-04-23</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>在我们创建 router 对象的时候，会创建一个 history 对象，前面提到 Vue Router 支持三种模式，这里我们重点分析 HTML5 的 history 的模式：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">createWebHistory</span>(<span class="params">base</span>) </span>&#123;</span><br><span class="line">  base = normalizeBase(base)</span><br><span class="line">  <span class="keyword">const</span> historyNavigation = useHistoryStateNavigation(base)</span><br><span class="line">  <span class="keyword">const</span> historyListeners = useHistoryListeners(base, historyNavigation.state, historyNavigation.location, historyNavigation.replace)</span><br><span class="line">  <span class="function"><span class="keyword">function</span> <span class="title">go</span>(<span class="params">delta, triggerListeners = <span class="literal">true</span></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!triggerListeners)</span><br><span class="line">      historyListeners.pauseListeners()</span><br><span class="line">    history.go(delta)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">const</span> routerHistory = assign(&#123;</span><br><span class="line">    <span class="comment">// it&#x27;s overridden right after</span></span><br><span class="line">    location: <span class="string">&#x27;&#x27;</span>,</span><br><span class="line">    base,</span><br><span class="line">    go,</span><br><span class="line">    createHref: createHref.bind(<span class="literal">null</span>, base),</span><br><span class="line">  &#125;, historyNavigation, historyListeners)</span><br><span class="line">  <span class="built_in">Object</span>.defineProperty(routerHistory, <span class="string">&#x27;location&#x27;</span>, &#123;</span><br><span class="line">    get: <span class="function">() =&gt;</span> historyNavigation.location.value,</span><br><span class="line">  &#125;)</span><br><span class="line">  <span class="built_in">Object</span>.defineProperty(routerHistory, <span class="string">&#x27;state&#x27;</span>, &#123;</span><br><span class="line">    get: <span class="function">() =&gt;</span> historyNavigation.state.value,</span><br><span class="line">  &#125;)</span><br><span class="line">  <span class="keyword">return</span> routerHistory</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>对于 routerHistory 对象而言，它有两个重要的作用，一个是路径的切换，一个是监听路径的变化。</p>
+<p>其中，路径切换主要通过 historyNavigation 来完成的，它是 useHistoryStateNavigation 函数的返回值，我们来看它的实现：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">useHistoryStateNavigation</span>(<span class="params">base</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">const</span> &#123; history, location &#125; = <span class="built_in">window</span></span><br><span class="line">  <span class="keyword">let</span> currentLocation = &#123;</span><br><span class="line">    value: createCurrentLocation(base, location),</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">let</span> historyState = &#123; <span class="attr">value</span>: history.state &#125;</span><br><span class="line">  <span class="keyword">if</span> (!historyState.value) &#123;</span><br><span class="line">    changeLocation(currentLocation.value, &#123;</span><br><span class="line">      back: <span class="literal">null</span>,</span><br><span class="line">      current: currentLocation.value,</span><br><span class="line">      forward: <span class="literal">null</span>,</span><br><span class="line">      position: history.length - <span class="number">1</span>,</span><br><span class="line">      replaced: <span class="literal">true</span>,</span><br><span class="line">      scroll: <span class="literal">null</span>,</span><br><span class="line">    &#125;, <span class="literal">true</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="function"><span class="keyword">function</span> <span class="title">changeLocation</span>(<span class="params">to, state, replace</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">const</span> url = createBaseLocation() +</span><br><span class="line">      <span class="comment">// preserve any existing query when base has a hash</span></span><br><span class="line">      (base.indexOf(<span class="string">&#x27;#&#x27;</span>) &gt; -<span class="number">1</span> &amp;&amp; location.search</span><br><span class="line">        ? location.pathname + location.search + <span class="string">&#x27;#&#x27;</span></span><br><span class="line">        : base) +</span><br><span class="line">      to</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      history[replace ? <span class="string">&#x27;replaceState&#x27;</span> : <span class="string">&#x27;pushState&#x27;</span>](state, <span class="string">&#x27;&#x27;</span>, url)</span><br><span class="line">      historyState.value = state</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">catch</span> (err) &#123;</span><br><span class="line">      warn(<span class="string">&#x27;Error with push/replace State&#x27;</span>, err)</span><br><span class="line">      location[replace ? <span class="string">&#x27;replace&#x27;</span> : <span class="string">&#x27;assign&#x27;</span>](url)</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="function"><span class="keyword">function</span> <span class="title">replace</span>(<span class="params">to, data</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">const</span> state = assign(&#123;&#125;, history.state, buildState(historyState.value.back,</span><br><span class="line">      <span class="comment">// keep back and forward entries but override current position</span></span><br><span class="line">      to, historyState.value.forward, <span class="literal">true</span>), data, &#123; <span class="attr">position</span>: historyState.value.position &#125;)</span><br><span class="line">    changeLocation(to, state, <span class="literal">true</span>)</span><br><span class="line">    currentLocation.value = to</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="function"><span class="keyword">function</span> <span class="title">push</span>(<span class="params">to, data</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">const</span> currentState = assign(&#123;&#125;,</span><br><span class="line">      historyState.value, history.state, &#123;</span><br><span class="line">        forward: to,</span><br><span class="line">        scroll: computeScrollPosition(),</span><br><span class="line">      &#125;)</span><br><span class="line">    <span class="keyword">if</span> ( !history.state) &#123;</span><br><span class="line">      warn(<span class="string">`history.state seems to have been manually replaced without preserving the necessary values. Make sure to preserve existing history state if you are manually calling history.replaceState:\n\n`</span> +</span><br><span class="line">        <span class="string">`history.replaceState(history.state, &#x27;&#x27;, url)\n\n`</span> +</span><br><span class="line">        <span class="string">`You can find more information at https://next.router.vuejs.org/guide/migration/#usage-of-history-state.`</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    changeLocation(currentState.current, currentState, <span class="literal">true</span>)</span><br><span class="line">    <span class="keyword">const</span> state = assign(&#123;&#125;, buildState(currentLocation.value, to, <span class="literal">null</span>), &#123; <span class="attr">position</span>: currentState.position + <span class="number">1</span> &#125;, data)</span><br><span class="line">    changeLocation(to, state, <span class="literal">false</span>)</span><br><span class="line">    currentLocation.value = to</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> &#123;</span><br><span class="line">    location: currentLocation,</span><br><span class="line">    state: historyState,</span><br><span class="line">    push,</span><br><span class="line">    replace</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>该函数返回的 push 和 replace 函数，会添加给 routerHistory 对象上，因此当我们调用 routerHistory.push 或者是 routerHistory.replace 方法的时候实际上就是在执行这两个函数。</p>
+<p>push 和 replace 方法内部都是执行了 changeLocation 方法，该函数内部执行了浏览器底层的 history.pushState 或者 history.replaceState 方法，会向当前浏览器会话的历史堆栈中添加一个状态，这样就在不刷新页面的情况下修改了页面的 URL。</p>
+<p>我们使用这种方法修改了路径，这个时候假设我们点击浏览器的回退按钮回到上一个 URL，这需要恢复到上一个路径以及更新路由视图，因此我们还需要监听这种 history 变化的行为，做一些相应的处理。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/04/23/Vue3-0-vnode%E5%88%B0%E7%9C%9F%E5%AE%9EDOM%E8%BD%AC%E6%8D%A2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Choo">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Choo'blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/04/23/Vue3-0-vnode%E5%88%B0%E7%9C%9F%E5%AE%9EDOM%E8%BD%AC%E6%8D%A2/" class="post-title-link" itemprop="url">Vue3.0: vnode到真实DOM转换</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-04-23 18:18:02 / 修改时间：18:18:12" itemprop="dateCreated datePublished" datetime="2021-04-23T18:18:02+08:00">2021-04-23</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>在 Vue.js 中，组件是一个非常重要的概念，整个应用的页面都是通过组件渲染来实现的</p>
+<p>首先，组件是一个抽象的概念，它是对一棵 DOM 树的抽象，我们在页面中写一个组件节点：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;hello-world&gt;&lt;/hello-world&gt;</span><br></pre></td></tr></table></figure>
+
+<p>这段代码并不会在页面上渲染一个<code>&lt;hello-world&gt;</code>标签，而他具体渲染成什么，取决于你怎么编写HelloWorld组件的模版。</p>
+<p>所以，从表现上来看，组件的模板决定了组件生成的 DOM 标签，而在 Vue.js 内部，一个组件想要真正的渲染生成 DOM，还需要经历<strong>“创建 vnode - 渲染 vnode - 生成 DOM” 这几个步骤</strong></p>
+<h4 id="应用程序初始化"><a href="#应用程序初始化" class="headerlink" title="应用程序初始化"></a>应用程序初始化</h4><p>一个组件可以通过“模板加对象描述”的方式创建，组件创建好以后是如何被调用并初始化的呢？因为整个组件树是由根组件开始渲染的，为了找到根组件的渲染入口，我们需要从应用程序的初始化过程开始分析。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在 Vue.js 2.x 中，初始化一个应用的方式如下</span></span><br><span class="line"><span class="keyword">import</span> Vue <span class="keyword">from</span> <span class="string">&#x27;vue&#x27;</span></span><br><span class="line"><span class="keyword">import</span> App <span class="keyword">from</span> <span class="string">&#x27;./App&#x27;</span></span><br><span class="line"><span class="keyword">const</span> app = <span class="keyword">new</span> Vue(&#123;</span><br><span class="line">  render: <span class="function"><span class="params">h</span> =&gt;</span> h(App)</span><br><span class="line">&#125;)</span><br><span class="line">app.$mount(<span class="string">&#x27;#app&#x27;</span>)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在 Vue.js 3.0 中，初始化一个应用的方式如下</span></span><br><span class="line"><span class="keyword">import</span> &#123; createApp &#125; <span class="keyword">from</span> <span class="string">&#x27;vue&#x27;</span></span><br><span class="line"><span class="keyword">import</span> App <span class="keyword">from</span> <span class="string">&#x27;./app&#x27;</span></span><br><span class="line"><span class="keyword">const</span> app = createApp(App)</span><br><span class="line">app.mount(<span class="string">&#x27;#app&#x27;</span>)</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，Vue.js 3.0 初始化应用的方式和 Vue.js 2.x 差别并不大，本质上都是把 App 组件挂载到 id 为 app 的 DOM 节点上。</p>
+<p>但是，在 Vue.js 3.0 中还导入了一个 createApp，其实这是个入口函数，它是 Vue.js 对外暴露的一个函数</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> createApp = (<span class="function">(<span class="params">...args</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="comment">// 创建 app 对象</span></span><br><span class="line">  <span class="keyword">const</span> app = ensureRenderer().createApp(...args)</span><br><span class="line">  <span class="keyword">const</span> &#123; mount &#125; = app</span><br><span class="line">  <span class="comment">// 重写 mount 方法</span></span><br><span class="line">  app.mount = <span class="function">(<span class="params">containerOrSelector</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> app</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+<p>从代码中可以看出 createApp 主要做了两件事情：创建 app 对象和重写 app.mount 方法。</p>
+<h4 id="1-创建app对象"><a href="#1-创建app对象" class="headerlink" title="1.创建app对象"></a>1.创建app对象</h4><p>首先，我们使用 ensureRenderer().createApp() 来创建 app 对象 ：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> app = ensureRenderer().createApp(...args)</span><br></pre></td></tr></table></figure>
+
+<p>其中 ensureRenderer() 用来创建一个渲染器对象，它的内部代码是这样的：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> app = ensureRenderer().createApp(...args)</span><br></pre></td></tr></table></figure>
+
+<p>其中ensureRenderer()用来创建一个渲染器对象，它的内部代码是这样的：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 渲染相关的一些配置，比如更新属性的方法，操作 DOM 的方法</span></span><br><span class="line"><span class="keyword">const</span> rendererOptions = &#123;</span><br><span class="line">  patchProp,</span><br><span class="line">  ...nodeOps</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 延时创建渲染器，当用户只依赖响应式包的时候，可以通过 tree-shaking 移除核心渲染逻辑相关的代码</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">ensureRenderer</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> renderer || (renderer = createRenderer(rendererOptions))</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">createRenderer</span>(<span class="params">options</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> baseCreateRenderer(options)</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">baseCreateRenderer</span>(<span class="params">options</span>) </span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">function</span> <span class="title">render</span>(<span class="params">vnode, container</span>) </span>&#123;</span><br><span class="line">    <span class="comment">// 组件渲染的核心逻辑</span></span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> &#123;</span><br><span class="line">    render,</span><br><span class="line">    createApp: createAppAPI(render)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">createAppAPI</span>(<span class="params">render</span>) </span>&#123;</span><br><span class="line">  <span class="comment">// createApp createApp 方法接受的两个参数：根组件的对象和 prop</span></span><br><span class="line">  <span class="keyword">return</span> <span class="function"><span class="keyword">function</span> <span class="title">createApp</span>(<span class="params">rootComponent, rootProps = <span class="literal">null</span></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">const</span> app = &#123;</span><br><span class="line">      _component: rootComponent,</span><br><span class="line">      _props: rootProps,</span><br><span class="line">      <span class="function"><span class="title">mount</span>(<span class="params">rootContainer</span>)</span> &#123;</span><br><span class="line">        <span class="comment">// 创建根组件的 vnode</span></span><br><span class="line">        <span class="keyword">const</span> vnode = createVNode(rootComponent, rootProps)</span><br><span class="line">        <span class="comment">// 利用渲染器渲染 vnode</span></span><br><span class="line">        render(vnode, rootContainer)</span><br><span class="line">        app._container = rootContainer</span><br><span class="line">        <span class="keyword">return</span> vnode.component.proxy</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> app</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，这里先用ensureRenderer()来延时创建渲染器，这样做的好处是当用户只依赖响应式包的时候，就不会创建渲染器，因此可以通过tree-shaking的方式移除核心渲染逻辑相关的代码</p>
+<p>在 Vue.js 3.0 内部通过 createRenderer 创建一个渲染器，这个渲染器内部会有一个 createApp 方法，它是执行 createAppAPI 方法返回的函数，接受了 rootComponent 和 rootProps 两个参数，我们在应用层面执行 createApp(App) 方法时，会把 App 组件对象作为根组件传递给 rootComponent。这样，createApp 内部就创建了一个 app 对象，它会提供 mount 方法，这个方法是用来挂载组件的。</p>
+<h3 id="核心渲染流程：创建-vnode-和渲染-vnode"><a href="#核心渲染流程：创建-vnode-和渲染-vnode" class="headerlink" title="核心渲染流程：创建 vnode 和渲染 vnode"></a>核心渲染流程：创建 vnode 和渲染 vnode</h3><h4 id="1-创建vnode"><a href="#1-创建vnode" class="headerlink" title="1.创建vnode"></a>1.创建vnode</h4><p>首先，是创建vnode的过程</p>
+<p>vnode本质上是用来描述DOM的Javascript对象，它在Vue.js 中可以描述不同类型的节点，比如普通元素节点、组件节点等。</p>
+<p>什么是普通元素节点呢？</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">button</span> <span class="attr">class</span>=<span class="string">&quot;btn&quot;</span> <span class="attr">style</span>=<span class="string">&quot;width:100px;height:50px&quot;</span>&gt;</span>click me<span class="tag">&lt;/<span class="name">button</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>我们可以用vnode这样表示<code>button</code>标签</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> vnode = &#123;</span><br><span class="line">  type: <span class="string">&#x27;button&#x27;</span>,</span><br><span class="line">  props: &#123; </span><br><span class="line">    <span class="string">&#x27;class&#x27;</span>: <span class="string">&#x27;btn&#x27;</span>,</span><br><span class="line">    style: &#123;</span><br><span class="line">      width: <span class="string">&#x27;100px&#x27;</span>,</span><br><span class="line">      height: <span class="string">&#x27;50px&#x27;</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;,</span><br><span class="line">  children: <span class="string">&#x27;click me&#x27;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>其中，type 属性表示 DOM 的标签类型，props 属性表示 DOM 的一些附加信息，比如 style 、class 等，children 属性表示 DOM 的子节点，它也可以是一个 vnode 数组，只不过 vnode 可以用字符串表示简单的文本 。</p>
+<p>什么是组件节点呢？其实， vnode 除了可以像上面那样用于描述一个真实的 DOM，也可以用来描述组件。</p>
+<p>我们先在模板中引入一个组件标签 <custom-component>：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">custom-component</span> <span class="attr">msg</span>=<span class="string">&quot;test&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">custom-component</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>我们可以用 vnode 这样表示 <custom-component> 组件标签：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> CustomComponent = &#123;</span><br><span class="line">  <span class="comment">// 在这里定义组件对象</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">const</span> vnode = &#123;</span><br><span class="line">  type: CustomComponent,</span><br><span class="line">  props: &#123; </span><br><span class="line">    msg: <span class="string">&#x27;test&#x27;</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>组件 vnode 其实是对抽象事物的描述，这是因为我们并不会在页面上真正渲染一个 <custom-component> 标签，而是渲染组件内部定义的 HTML 标签。</p>
+<p><strong>那么 vnode 有什么优势呢？为什么一定要设计 vnode 这样的数据结构呢？</strong></p>
+<p>首先是抽象，引入vnode，可以把渲染过程抽象化，从而使得组件的抽象能力也得到提升</p>
+<p>其次是跨平台，因为patch vnode的过程不同平台可以有自己的实现，基于vnode再做服务端渲染、weex平台、小程序的平台的渲染都变得容易很多</p>
+<p>使用vnode并不意味着不用操作DOM了，很多人会误以为vnode的性能一定比手动操作原生DOM好，这个其实不一定。</p>
+<p>因为，首先这种基于vnode实现的MVVM框架，在每次render to vnode的过程中，渲染组件会有一定的javascript耗时，特别是大组件，比如一个1000 * 10的Table组件，render to vnode的过程会遍历1000 * 10次去创建内部cell vnode，整个耗时就会变得特别常，加上patch vnode的过程也会有一定的耗时，当我们去更新组件的时候，用户会感觉到明显的卡顿。虽然diff算法在减少DOM操作方面足够优秀，但最终还是免不了操作DOM，所以说性能并不是vnode的优势</p>
+<p><strong>那么，Vue.js 内部是如何创建这些 vnode 的呢？</strong></p>
+<p>回顾，app.mount函数的实现，内部是通过createVNode函数创建了根组件的vnode：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> vnode = createVNode(rootComponent, rootProps)</span><br></pre></td></tr></table></figure>
+
+<p>其实createVNode做的事情很简单，就是对props做标准化处理、对vnode的类型信息编码、创建vnode对象，标准化子节点children</p>
+<h4 id="渲染vnode"><a href="#渲染vnode" class="headerlink" title="渲染vnode"></a>渲染vnode</h4><p>回顾app.mount函数的实现，内部通过执行这段代码去渲染创建好的vnode:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">render(vnode, rootContainer)</span><br><span class="line"><span class="keyword">const</span> render = <span class="function">(<span class="params">vnode, container</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">if</span> (vnode == <span class="literal">null</span>) &#123;</span><br><span class="line">    <span class="comment">// 销毁组件</span></span><br><span class="line">    <span class="keyword">if</span> (container._vnode) &#123;</span><br><span class="line">      unmount(container._vnode, <span class="literal">null</span>, <span class="literal">null</span>, <span class="literal">true</span>)</span><br><span class="line">    &#125;</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="comment">// 创建或者更新组件</span></span><br><span class="line">    patch(container._vnode || <span class="literal">null</span>, vnode, container)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 缓存 vnode 节点，表示已经渲染</span></span><br><span class="line">  container._vnode = vnode</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这个渲染函数render的实现很简单，如果它的第一个参数vnode为空，则执行销毁组件的逻辑，否则执行创建或者更新组件的逻辑</p>
+<p>patch 本意是打补丁的意思，这个函数有两个功能，一个是根据 vnode 挂载 DOM，一个是根据新旧 vnode 更新 DOM</p>
+<p>在创建的过程中，patch 函数接受多个参数</p>
+<ul>
+<li>第一个参数 n1 表示旧的 vnode，当 n1 为 null 的时候，表示是一次挂载的过程；</li>
+<li>第二个参数 n2 表示新的 vnode 节点，后续会根据这个 vnode 类型执行不同的处理逻辑；</li>
+<li>第三个参数 container 表示 DOM 容器，也就是 vnode 渲染生成 DOM 后，会挂载到 container 下面。</li>
+</ul>
+<p>对于渲染的节点，我们这里重点关注两种类型节点的渲染逻辑：对组件的处理和对普通 DOM 元素的处理。</p>
+<p>先来看对组件的处理。由于初始化渲染的是 App 组件，它是一个组件 vnode，所以我们来看一下组件的处理逻辑是怎样的。首先是用来处理组件的 processComponent 函数的实现：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> processComponent = <span class="function">(<span class="params">n1, n2, container, anchor, parentComponent, parentSuspense, isSVG, optimized</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">if</span> (n1 == <span class="literal">null</span>) &#123;</span><br><span class="line">   <span class="comment">// 挂载组件</span></span><br><span class="line">   mountComponent(n2, container, anchor, parentComponent, parentSuspense, isSVG, optimized)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="comment">// 更新组件</span></span><br><span class="line">    updateComponent(n1, n2, parentComponent, optimized)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>该函数的逻辑很简单，如果 n1 为 null，则执行挂载组件的逻辑，否则执行更新组件的逻辑。</p>
+<p>我们接着来看挂载组件的 mountComponent 函数的实现：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> mountComponent = <span class="function">(<span class="params">initialVNode, container, anchor, parentComponent, parentSuspense, isSVG, optimized</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="comment">// 创建组件实例</span></span><br><span class="line">  <span class="keyword">const</span> instance = (initialVNode.component = createComponentInstance(initialVNode, parentComponent, parentSuspense))</span><br><span class="line">  <span class="comment">// 设置组件实例</span></span><br><span class="line">  setupComponent(instance)</span><br><span class="line">  <span class="comment">// 设置并运行带副作用的渲染函数</span></span><br><span class="line">  setupRenderEffect(instance, initialVNode, container, anchor, parentSuspense, isSVG, optimized)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，挂载组件函数 mountComponent 主要做三件事情：创建组件实例、设置组件实例、设置并运行带副作用的渲染函数。</p>
+<p>首先是创建组件实例，Vue.js 3.0 虽然不像 Vue.js 2.x 那样通过类的方式去实例化组件，但内部也通过对象的方式去创建了当前渲染的组件实例。</p>
+<p>其次设置组件实例，instance 保留了很多组件相关的数据，维护了组件的上下文，包括对 props、插槽，以及其他实例的属性的初始化处理。</p>
+<p><strong>初始渲染主要做两件事情：渲染组件生成 subTree、把 subTree 挂载到 container 中。</strong></p>
+<p>首先，是渲染组件生成 subTree，它也是一个 vnode 对象。这里要注意别把 subTree 和 initialVNode 弄混了（其实在 Vue.js 3.0 中，根据命名我们已经能很好地区分它们了，而在 Vue.js 2.x 中它们分别命名为 _vnode 和 $vnode）。我来举个例子说明，在父组件 App 中里引入了 Hello 组件：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&lt;template&gt;</span><br><span class="line">  &lt;div <span class="class"><span class="keyword">class</span></span>=<span class="string">&quot;app&quot;</span>&gt;</span><br><span class="line">    &lt;p&gt;This is an app.&lt;/p&gt;</span><br><span class="line">    &lt;hello&gt;&lt;/hello&gt;</span><br><span class="line">  &lt;/div&gt;</span><br><span class="line">&lt;/template&gt;</span><br></pre></td></tr></table></figure>
+
+<p>在Hello组件中是<code>div</code>标签包裹这一个<code>p</code>标签</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;template&gt;</span><br><span class="line">  &lt;div class&#x3D;&quot;hello&quot;&gt;</span><br><span class="line">    &lt;p&gt;Hello, Vue 3.0!&lt;&#x2F;p&gt;</span><br><span class="line">  &lt;&#x2F;div&gt;</span><br><span class="line">&lt;&#x2F;template&gt;</span><br></pre></td></tr></table></figure>
+
+<p>在 App 组件中， <hello> 节点渲染生成的 vnode ，对应的就是 Hello 组件的 initialVNode ，为了好记，你也可以把它称作“组件 vnode”。而 Hello 组件内部整个 DOM 节点对应的 vnode 就是执行 renderComponentRoot 渲染生成对应的 subTree，我们可以把它称作“子树 vnode”。</p>
+<p>我们知道每个组件都会有对应的 render 函数，即使你写 template，也会编译成 render 函数，而 renderComponentRoot 函数就是去执行 render 函数创建整个组件树内部的 vnode，把这个 vnode 再经过内部一层标准化，就得到了该函数的返回结果：子树 vnode。</p>
+<p>渲染生成子树 vnode 后，接下来就是继续调用 patch 函数把子树 vnode 挂载到 container 中了。</p>
+<p>那么我们又再次回到了 patch 函数，会继续对这个子树 vnode 类型进行判断，对于上述例子，App 组件的根节点是 <div> 标签，那么对应的子树 vnode 也是一个普通元素 vnode，那么我们接下来<strong>看对普通 DOM 元素的处理流程</strong>。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> mountElement = <span class="function">(<span class="params">vnode, container, anchor, parentComponent, parentSuspense, isSVG, optimized</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">let</span> el</span><br><span class="line">  <span class="keyword">const</span> &#123; type, props, shapeFlag &#125; = vnode</span><br><span class="line">  <span class="comment">// 创建 DOM 元素节点</span></span><br><span class="line">  el = vnode.el = hostCreateElement(vnode.type, isSVG, props &amp;&amp; props.is)</span><br><span class="line">  <span class="keyword">if</span> (props) &#123;</span><br><span class="line">    <span class="comment">// 处理 props，比如 class、style、event 等属性</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">const</span> key <span class="keyword">in</span> props) &#123;</span><br><span class="line">      <span class="keyword">if</span> (!isReservedProp(key)) &#123;</span><br><span class="line">        hostPatchProp(el, key, <span class="literal">null</span>, props[key], isSVG)</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (shapeFlag &amp; <span class="number">8</span> <span class="comment">/* TEXT_CHILDREN */</span>) &#123;</span><br><span class="line">    <span class="comment">// 处理子节点是纯文本的情况</span></span><br><span class="line">    hostSetElementText(el, vnode.children)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">else</span> <span class="keyword">if</span> (shapeFlag &amp; <span class="number">16</span> <span class="comment">/* ARRAY_CHILDREN */</span>) &#123;</span><br><span class="line">    <span class="comment">// 处理子节点是数组的情况</span></span><br><span class="line">    mountChildren(vnode.children, el, <span class="literal">null</span>, parentComponent, parentSuspense, isSVG &amp;&amp; type !== <span class="string">&#x27;foreignObject&#x27;</span>, optimized || !!vnode.dynamicChildren)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 把创建的 DOM 元素节点挂载到 container 上</span></span><br><span class="line">  hostInsert(el, container, anchor)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，挂载元素函数主要做四件事：创建 DOM 元素节点、处理 props、处理 children、挂载 DOM 元素到 container 上。</p>
+<p>首先是创建 DOM 元素节点，通过 hostCreateElement 方法创建，这是一个平台相关的方法，我们来看一下它在 Web 环境下的定义：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">createElement</span>(<span class="params">tag, isSVG, is</span>) </span>&#123;</span><br><span class="line">  isSVG ? <span class="built_in">document</span>.createElementNS(svgNS, tag)</span><br><span class="line">    : <span class="built_in">document</span>.createElement(tag, is ? &#123; is &#125; : <span class="literal">undefined</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>它调用了底层的 DOM API document.createElement 创建元素，所以本质上 Vue.js 强调不去操作 DOM ，只是希望用户不直接碰触 DOM，它并没有什么神奇的魔法，底层还是会操作 DOM。</p>
+<p>另外，如果是其他平台比如 Weex，hostCreateElement 方法就不再是操作 DOM ，而是平台相关的 API 了，这些平台相关的方法是在创建渲染器阶段作为参数传入的。</p>
+<p>创建完 DOM 节点后，接下来要做的是判断如果有 props 的话，给这个 DOM 节点添加相关的 class、style、event 等属性，并做相关的处理，这些逻辑都是在 hostPatchProp 函数内部做的，这里就不展开讲了。</p>
+<p>接下来是对子节点的处理，我们知道 DOM 是一棵树，vnode 同样也是一棵树，并且它和 DOM 结构是一一映射的。</p>
+<p>如果子节点是纯文本，则执行 hostSetElementText 方法，它在 Web 环境下通过设置 DOM 元素的 textContent 属性设置文本：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">setElementText</span>(<span class="params">el, text</span>) </span>&#123;</span><br><span class="line">  el.textContent = text</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>子节点的挂载逻辑同样很简单，遍历 children 获取到每一个 child，然后递归执行 patch 方法挂载每一个 child 。注意，这里有对 child 做预处理的情况（后面编译优化的章节会详细分析）。</p>
+<p>可以看到，mountChildren 函数的第二个参数是 container，而我们调用 mountChildren 方法传入的第二个参数是在 mountElement 时创建的 DOM 节点，这就很好地建立了父子关系。</p>
+<p>另外，通过递归 patch 这种深度优先遍历树的方式，我们就可以构造完整的 DOM 树，完成组件的渲染。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/04/23/Vue3-0%E7%9A%84%E4%BC%98%E5%8C%96/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Choo">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Choo'blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/04/23/Vue3-0%E7%9A%84%E4%BC%98%E5%8C%96/" class="post-title-link" itemprop="url">Vue3.0的优化</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-04-23 18:17:26 / 修改时间：18:17:42" itemprop="dateCreated datePublished" datetime="2021-04-23T18:17:26+08:00">2021-04-23</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="源码优化"><a href="#源码优化" class="headerlink" title="源码优化"></a>源码优化</h3><p>码的优化主要体现在使用 monorepo 和 TypeScript 管理和开发源码，这样做的目标是提升自身代码可维护性。</p>
+<h4 id="1-更好的代码管理方式：monorepo"><a href="#1-更好的代码管理方式：monorepo" class="headerlink" title="1. 更好的代码管理方式：monorepo"></a>1. 更好的代码管理方式：monorepo</h4><p>首先，源码的优化体现在代码管理方式上。Vue2.x的源码托管在src目录，然后依据功能拆分出了compiler(模版编译的相关代码)、core(与平台无关的通用运行时代码)、platforms(平台专有代码)、sfc(.vue单文件解析相关代码)、shared(共享工具代码)等目录</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2021/png/259122/1616574367425-f8002c3a-a103-4d47-a9e7-f0d50673f4e2.png"></p>
+<p>而到了 Vue.js 3.0，整个源码是通过monorepo的方式维护的，根据功能将不同的模块拆分到packages目录下面不同的子目录中：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2021/png/259122/1616574492486-577b2ba6-51cf-4765-bcca-aad57864a5e7.png"></p>
+<p>可以看出相对于2.x的源码管理方式，monorepo把这些模块拆分到不同的package中，每个package有格子的API、类型定义和测试。这样使得模块拆分更细化，职责划分更明确，模块之间的依赖关系也更加明确，开发人员也更容易阅读、理解和更改所有模块源码，提高代码的可维护性。</p>
+<p>另外一些 package（比如 reactivity 响应式库）是可以独立于 Vue.js 使用的，这样用户如果只想使用 Vue.js 3.0 的响应式能力，可以单独依赖这个响应式库而不用去依赖整个 Vue.js，减小了引用包的体积大小，而 Vue.js 2 .x 是做不到这一点的。</p>
+<h4 id="有类型的javascript：TypeScript"><a href="#有类型的javascript：TypeScript" class="headerlink" title="有类型的javascript：TypeScript"></a>有类型的javascript：TypeScript</h4><p>其次，源码的优化还体现在 Vue.js 3.0 自身采用了 TypeScript 开发。Vue.js 1.x 版本的源码是没有用类型语言的，小右用 JavaScript 开发了整个框架，但对于复杂的框架项目开发，使用类型语言非常有利于代码的维护，因为它可以在编码期间帮你做类型检查，避免一些因类型问题导致的错误；也可以利于它去定义接口的类型，利于 IDE 对变量类型的推导。</p>
+<h3 id="性能优化"><a href="#性能优化" class="headerlink" title="性能优化"></a>性能优化</h3><p>性能优化一直是前端老生常谈的问题。那么对于 Vue.js 2.x 已经足够优秀的前端框架，它的性能优化可以从哪些方面进行突破呢？</p>
+<h4 id="1-源码体积优化"><a href="#1-源码体积优化" class="headerlink" title="1. 源码体积优化"></a>1. 源码体积优化</h4><p>首先是源码体积优化，我们在平时工作中也经常会尝试优化静态资源的体积，因为 JavaScript 包体积越小，意味着网络传输时间越短，JavaScript 引擎解析包的速度也越快。</p>
+<p>那么，Vue.js 3.0 在源码体积的减少方面做了哪些工作呢？</p>
+<ul>
+<li>首先，移除一些冷门的 feature（比如 filter、inline-template 等）；</li>
+<li>其次，引入 tree-shaking 的技术，减少打包体积。</li>
+</ul>
+<p>tree-shaking 依赖 ES2015 模块语法的静态结构（即 import 和 export），通过编译阶段的静态分析，找到没有引入的模块并打上标记。</p>
+<p>举个例子，一个 math 模块定义了 2 个方法 square(x) 和 cube(x) ：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="function"><span class="keyword">function</span> <span class="title">square</span>(<span class="params">x</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> x * x</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">export</span> <span class="function"><span class="keyword">function</span> <span class="title">cube</span>(<span class="params">x</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> x * x * x</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们在这个模块外面只引入了 cube 方法：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; cube &#125; <span class="keyword">from</span> <span class="string">&#x27;./math.js&#x27;</span></span><br><span class="line"><span class="comment">// do something with cube</span></span><br></pre></td></tr></table></figure>
+
+<p>最终 math 模块会被 webpack 打包生成如下代码：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* 1 */</span></span><br><span class="line"><span class="comment">/***/</span> (<span class="function"><span class="keyword">function</span>(<span class="params"><span class="built_in">module</span>, __webpack_exports__, __webpack_require__</span>) </span>&#123;</span><br><span class="line"><span class="meta">  &#x27;use strict&#x27;</span>;</span><br><span class="line">  <span class="comment">/* unused harmony export square */</span></span><br><span class="line">  <span class="comment">/* harmony export (immutable) */</span> __webpack_exports__[<span class="string">&#x27;a&#x27;</span>] = cube;</span><br><span class="line">  <span class="function"><span class="keyword">function</span> <span class="title">square</span>(<span class="params">x</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> x * x;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="function"><span class="keyword">function</span> <span class="title">cube</span>(<span class="params">x</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> x * x * x;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，未被引入的 square 模块被标记了， 然后压缩阶段会利用例如 uglify-js、terser 等压缩工具真正地删除这些没有用到的代码。</p>
+<p>也就是说，利用 tree-shaking 技术，如果你在项目中没有引入 Transition、KeepAlive 等组件，那么它们对应的代码就不会打包，这样也就间接达到了减少项目引入的 Vue.js 包体积的目的。</p>
+<h3 id="2-数据劫持优化"><a href="#2-数据劫持优化" class="headerlink" title="2.数据劫持优化"></a>2.数据劫持优化</h3><p>其次是数据劫持优化。Vue.js区别于React的一大特色是它的数据是响应式的，这个特性从Vue.js 1.x版本就一直伴随着。DOM是数据的一种映射，数据发生变化可以自动更新DOM</p>
+<p>在vue内部，想实现这个功能是要付出一定代价的，那就是必须劫持数据的访问和更新。其实这点很好理解，当数据改变后，为了自动更新dom，那么就必须劫持数据的更新，也就是说当数据发生改变后能自动执行一些代码去更新DOM，那么问题来了，Vue怎么知道更新那一片dom？因为在渲染dom的时候访问了数据，我们可以对它进行访问劫持，这样就在内部建立了依赖关系，也就知道对应的dom是什么了。</p>
+<p>Vue.js 1.x 和 Vue.js 2.x 内部都是通过 Object.defineProperty 这个 API 去劫持数据的 getter 和 setter，具体是这样的：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">Object</span>.defineProperty(data, <span class="string">&#x27;a&#x27;</span>,&#123;</span><br><span class="line">  <span class="function"><span class="title">get</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="comment">// track</span></span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="function"><span class="title">set</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="comment">// trigger</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+<p>但这个API有一些缺陷，它必须预先知道要拦截的key是什么，所以它并不能检测对象属性的添加和删除。尽管vue为了解决这个问题提供了$set和$delete实例方法，但是对于用户来说，还是增加了一定的心智负担</p>
+<p>另外Object.defineProperty 的方式还有一个问题，举个例子，比如这个嵌套层级比较深的对象：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> &#123;</span><br><span class="line">  data: &#123;</span><br><span class="line">    a: &#123;</span><br><span class="line">      b: &#123;</span><br><span class="line">        c: &#123;</span><br><span class="line">          d: <span class="number">1</span></span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>由于 Vue.js 无法判断你在运行时到底会访问到哪个属性，所以对于这样一个嵌套层级较深的对象，如果要劫持它内部深层次的对象变化，就需要递归遍历这个对象，执行 Object.defineProperty 把每一层对象数据都变成响应式的。毫无疑问，如果我们定义的响应式数据过于复杂，这就会有相当大的性能负担。</p>
+<p>为了解决上述 2 个问题，Vue.js 3.0 使用了 Proxy API 做数据劫持，它的内部是这样的：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">observed = <span class="keyword">new</span> <span class="built_in">Proxy</span>(data, &#123;</span><br><span class="line">  <span class="function"><span class="title">get</span>(<span class="params"></span>)</span> &#123;</span><br><span class="line">    <span class="comment">// track</span></span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="function"><span class="title">set</span>(<span class="params"></span>)</span> &#123;</span><br><span class="line">    <span class="comment">// trigger</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+<p>由于它劫持的是整个对象，那么自然对于对象的属性的增加和删除都能检测到。</p>
+<p>但要注意的是，Proxy API 并不能监听到内部深层次的对象变化，因此 Vue.js 3.0 的处理方式是在 getter 中去递归响应式，这样的好处是真正访问到的内部对象才会变成响应式，而不是无脑递归，这样无疑也在很大程度上提升了性能，我会在后面分析响应式章节详细介绍它的具体实现原理。</p>
+<h3 id="语法-API-优化：Composition-API"><a href="#语法-API-优化：Composition-API" class="headerlink" title="语法 API 优化：Composition API"></a>语法 API 优化：Composition API</h3><p>除了源码和性能方面，Vue.js 3.0 还在语法方面进行了优化，主要是提供了 Composition API</p>
+<h4 id="1-优化逻辑组织"><a href="#1-优化逻辑组织" class="headerlink" title="1.优化逻辑组织"></a>1.优化逻辑组织</h4><p>首先，是优化逻辑组织</p>
+<p>在 Vue.js 1.x 和 2.x 版本中，编写组件本质就是在编写一个“包含了描述组件选项的对象”，我们把它称为 Options API，它的好处是在于写法非常符合直觉思维，对于新手来说这样很容易理解，这也是很多人喜欢 Vue.js 的原因之一。</p>
+<p>Options API 的设计是按照 methods、computed、data、props 这些不同的选项分类，当组件小的时候，这种分类方式一目了然；但是在大型组件中，一个组件可能有多个逻辑关注点，当使用 Options API 的时候，每一个关注点都有自己的 Options，如果需要修改一个逻辑点关注点，就需要在单个文件中不断上下切换和寻找。</p>
+<p>Vue.js 3.0 提供了一种新的 API：Composition API，它有一个很好的机制去解决这样的问题，就是将某个逻辑关注点相关的代码全都放在一个函数里，这样当需要修改一个功能时，就不再需要在文件中跳来跳去。</p>
+<h4 id="2-优化逻辑复用"><a href="#2-优化逻辑复用" class="headerlink" title="2.优化逻辑复用"></a>2.优化逻辑复用</h4><p>其次，是优化逻辑复用</p>
+<p>当我们开发项目变得复杂的时候，免不了需要抽象出一些复用的逻辑。在 Vue.js 2.x 中，我们通常会用 mixins 去复用逻辑，举一个鼠标位置侦听的例子，我们会编写如下函数 mousePositionMixin：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> mousePositionMixin = &#123;</span><br><span class="line">  <span class="function"><span class="title">data</span>(<span class="params"></span>)</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> &#123;</span><br><span class="line">      x: <span class="number">0</span>,</span><br><span class="line">      y: <span class="number">0</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="function"><span class="title">mounted</span>(<span class="params"></span>)</span> &#123;</span><br><span class="line">    <span class="built_in">window</span>.addEventListener(<span class="string">&#x27;mousemove&#x27;</span>, <span class="built_in">this</span>.update)</span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="function"><span class="title">destroyed</span>(<span class="params"></span>)</span> &#123;</span><br><span class="line">    <span class="built_in">window</span>.removeEventListener(<span class="string">&#x27;mousemove&#x27;</span>, <span class="built_in">this</span>.update)</span><br><span class="line">  &#125;,</span><br><span class="line">  methods: &#123;</span><br><span class="line">    <span class="function"><span class="title">update</span>(<span class="params">e</span>)</span> &#123;</span><br><span class="line">      <span class="built_in">this</span>.x = e.pageX</span><br><span class="line">      <span class="built_in">this</span>.y = e.pageY</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> mousePositionMixin</span><br></pre></td></tr></table></figure>
+
+<p>然后在组件中使用：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&lt;template&gt;</span><br><span class="line">  &lt;div&gt;</span><br><span class="line">    Mouse position: x &#123;&#123; x &#125;&#125; &#x2F; y &#123;&#123; y &#125;&#125;</span><br><span class="line">  &lt;&#x2F;div&gt;</span><br><span class="line">&lt;&#x2F;template&gt;</span><br><span class="line">&lt;script&gt;</span><br><span class="line">import mousePositionMixin from &#39;.&#x2F;mouse&#39;</span><br><span class="line">export default &#123;</span><br><span class="line">  mixins: [mousePositionMixin]</span><br><span class="line">&#125;</span><br><span class="line">&lt;&#x2F;script&gt;</span><br></pre></td></tr></table></figure>
+
+<p>使用单个 mixin 似乎问题不大，但是当我们一个组件混入大量不同的 mixins 的时候，会存在两个非常明显的问题：命名冲突和数据来源不清晰。</p>
+<p>首先每个 mixin 都可以定义自己的 props、data，它们之间是无感的，所以很容易定义相同的变量，导致命名冲突。另外对组件而言，如果模板中使用不在当前组件中定义的变量，那么就会不太容易知道这些变量在哪里定义的，这就是数据来源不清晰。但是Vue.js 3.0 设计的 Composition API，就很好地帮助我们解决了 mixins 的这两个问题。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">import &#123; ref, onMounted, onUnmounted &#125; from &#39;vue&#39;</span><br><span class="line">export default function useMousePosition() &#123;</span><br><span class="line">  const x &#x3D; ref(0)</span><br><span class="line">  const y &#x3D; ref(0)</span><br><span class="line">  const update &#x3D; e &#x3D;&gt; &#123;</span><br><span class="line">    x.value &#x3D; e.pageX</span><br><span class="line">    y.value &#x3D; e.pageY</span><br><span class="line">  &#125;</span><br><span class="line">  onMounted(() &#x3D;&gt; &#123;</span><br><span class="line">    window.addEventListener(&#39;mousemove&#39;, update)</span><br><span class="line">  &#125;)</span><br><span class="line">  onUnmounted(() &#x3D;&gt; &#123;</span><br><span class="line">    window.removeEventListener(&#39;mousemove&#39;, update)</span><br><span class="line">  &#125;)</span><br><span class="line">  return &#123; x, y &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里我们约定 useMousePosition 这个函数为 hook 函数，然后在组件中使用：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">&lt;template&gt;</span><br><span class="line">  &lt;div&gt;</span><br><span class="line">    Mouse position: x &#123;&#123; x &#125;&#125; &#x2F; y &#123;&#123; y &#125;&#125;</span><br><span class="line">  &lt;&#x2F;div&gt;</span><br><span class="line">&lt;&#x2F;template&gt;</span><br><span class="line">&lt;script&gt;</span><br><span class="line">  import useMousePosition from &#39;.&#x2F;mouse&#39;</span><br><span class="line">  export default &#123;</span><br><span class="line">    setup() &#123;</span><br><span class="line">      const &#123; x, y &#125; &#x3D; useMousePosition()</span><br><span class="line">      return &#123; x, y &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&lt;&#x2F;script&gt;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，整个数据来源清晰了，即使去编写更多的 hook 函数，也不会出现命名冲突的问题。</p>
+<p>Composition API 除了在逻辑复用方面有优势，也会有更好的类型支持，因为它们都是一些函数，在调用函数时，自然所有的类型就被推导出来了，不像 Options API 所有的东西使用 this。另外，Composition API 对 tree-shaking 友好，代码也更容易压缩。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/04/23/%E4%BA%8B%E4%BB%B6%E5%BE%AA%E7%8E%AF%EF%BC%9A%E9%AB%98%E6%80%A7%E8%83%BD%E5%88%B0%E5%BA%95%E6%98%AF%E5%A6%82%E4%BD%95%E5%81%9A%E5%88%B0%E7%9A%84/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Choo">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Choo'blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/04/23/%E4%BA%8B%E4%BB%B6%E5%BE%AA%E7%8E%AF%EF%BC%9A%E9%AB%98%E6%80%A7%E8%83%BD%E5%88%B0%E5%BA%95%E6%98%AF%E5%A6%82%E4%BD%95%E5%81%9A%E5%88%B0%E7%9A%84/" class="post-title-link" itemprop="url">事件循环：高性能到底是如何做到的</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-04-23 18:16:57 / 修改时间：18:17:09" itemprop="dateCreated datePublished" datetime="2021-04-23T18:16:57+08:00">2021-04-23</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="Node-js事件循环"><a href="#Node-js事件循环" class="headerlink" title="Node.js事件循环"></a>Node.js事件循环</h3><p>事件循环同属来说就是一个无限的while循环</p>
+<h3 id="Node-js循环原理"><a href="#Node-js循环原理" class="headerlink" title="Node.js循环原理"></a>Node.js循环原理</h3><p><img src="https://cdn.nlark.com/yuque/0/2021/png/259122/1616471157971-d43c1f1e-cbb5-4911-b8fb-945b39fc71b5.png"></p>
+<p>可以看到，这一流程包含6个阶段，每个阶段代表的含义如下表示:</p>
+<ol>
+<li>timers: 本阶段已经被 setTimeout() 和 setInterval() 调度的回调函数，简单理解就是由这两个函数启动的回调函数</li>
+<li>pending callbacks: 本阶段执行某些系统操作 (如 TCP类型错误)的回调函数</li>
+<li>idle、prepare：仅系统内部使用，你只需要知道有这 2 个阶段就可以</li>
+<li>poll：检索新的 I/O 事件，执行与 I/O 相关的回调，其他情况 Node.js 将在适当的时候在此阻塞。这也是最复杂的一个阶段，所有的事件循环以及回调处理都在这个阶段执行，接下来会详细分析这个过程。</li>
+<li>check：setImmediate() 回调函数在这里执行，setImmediate 并不是立马执行，而是当事件循环 poll 中没有新的事件处理时就执行该部分，如下代码所示：</li>
+</ol>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> fs = <span class="built_in">require</span>(<span class="string">&#x27;fs&#x27;</span>);</span><br><span class="line"><span class="built_in">setTimeout</span>(<span class="function">() =&gt;</span> &#123; <span class="comment">// 新的事件循环的起点</span></span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">&#x27;1&#x27;</span>); </span><br><span class="line">&#125;, <span class="number">0</span>);</span><br><span class="line">setImmediate( <span class="function">() =&gt;</span> &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">&#x27;setImmediate 1&#x27;</span>);</span><br><span class="line">&#125;);</span><br><span class="line"><span class="comment">/// 将会在 poll 阶段执行</span></span><br><span class="line">fs.readFile(<span class="string">&#x27;./test.conf&#x27;</span>, &#123;<span class="attr">encoding</span>: <span class="string">&#x27;utf-8&#x27;</span>&#125;, <span class="function">(<span class="params">err, data</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (err) <span class="keyword">throw</span> err;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">&#x27;read file success&#x27;</span>);</span><br><span class="line">&#125;);</span><br><span class="line"><span class="comment">/// 该部分将会在首次事件循环中执行</span></span><br><span class="line"><span class="built_in">Promise</span>.resolve().then(<span class="function">()=&gt;</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">&#x27;poll callback&#x27;</span>);</span><br><span class="line">&#125;);</span><br><span class="line"><span class="comment">// 首次事件循环执行</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">&#x27;2&#x27;</span>);</span><br></pre></td></tr></table></figure>
+
+<p>在这一行代码中又一个非常奇特的地方，就是 setImmediate会在 setTimeout之后输出。有以下几点原因</p>
+<ul>
+<li>setTimeout如果不设置时间活着设置时间为0，则会默认为1ms</li>
+<li>主流程执行完成后，超过1ms时，会将setTimeout回调函数鹿皮插入到代执行poll队列中；</li>
+<li>由于当前 <strong>pull队列</strong> 存在可执行回调函数，因此需要先执行完，待完全执行完成后，才会执行<strong>check：setImmediate</strong>。因此这也验证了这句话，<strong>先执行回调函数，再执行 setImmediate。</strong></li>
+<li>close callbacks：执行一些关闭的回调函数，如 socket.on(‘close’, …)。</li>
+</ul>
+<h4 id="运行七点"><a href="#运行七点" class="headerlink" title="运行七点"></a>运行七点</h4><p>从图一中可以看出事件循环的七点是timers，如下代码所示：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">setTimeout</span>(<span class="function">() =&gt;</span> &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">&#x27;1&#x27;</span>);</span><br><span class="line">&#125;, <span class="number">0</span>);</span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">&#x27;2&#x27;</span>)</span><br></pre></td></tr></table></figure>
+
+<p>在代码 setTimeout 中的回调函数就是新一轮事件循环的起点，看到这里有很多同学会提出非常合理的疑问：“为什么会先输出 2 然后输出 1，不是说 timer 的回调函数是运行起点吗？”</p>
+<p>这里有一个非常关键点，当 Node.js 启动后，会初始化事件循环，处理已提供的输入脚本，它可能会先调用一些异步的 API、调度定时器，或者 process.nextTick()，然后再开始处理事件循环。因此可以这样理解，Node.js 进程启动后，就发起了一个新的事件循环，也就是事件循环的起点。</p>
+<p>总结来说，Node.js 事件循环的发起点有 4 个：</p>
+<ul>
+<li>Node.js启动后</li>
+<li>setTimeout回调函数</li>
+<li>setInterval回调函数</li>
+<li>也可能是一次I/O后的回调函数</li>
+</ul>
+<h4 id="Node-js事件循环-1"><a href="#Node-js事件循环-1" class="headerlink" title="Node.js事件循环"></a>Node.js事件循环</h4><p>在上面的核心流程中真正需要关注循环执行的就是 poll 这个过程。在poll过程中，主要处理的是异步 I/O 的回调函数，以及其他几乎所有的回调函数，异步I/O又分为网络I/O和文件I/O。这是我们常见的代码路基部分的异步回调逻辑</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2021/png/259122/1616487208111-0cb279de-37bd-4161-903c-c0a2f6ee698b.png"></p>
+<p><strong>微任务和红任务</strong></p>
+<p>微任务: 在 node.js 中微任务包含2种 - process.nextTick 和 Promise。微任务在事件循环中优先级是最高的，因此在同一个事件循环中又其他任务存在时，优先执行微任务队列。并且process.nextTick和promise也存在优先级，process.nextTick高于Promise</p>
+<p>宏任务: 在node.js中宏任务包含4种 - setTimeout、setInterval、setImmediate 和 I/O。宏任务在微任务执行之后执行，因此在统一事件循环周期内，如果既存在微任务队列又存在宏任务队列，那么优先将微任务队列清空，再执行宏任务队列。这也解析了我们前面提到的第3个问题，事件循环中的事件类型是存在优先级</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/04/23/%E8%A7%A3%E6%9E%90-webpack-%E6%BA%90%E7%A0%81/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Choo">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Choo'blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/04/23/%E8%A7%A3%E6%9E%90-webpack-%E6%BA%90%E7%A0%81/" class="post-title-link" itemprop="url">解析 webpack 源码</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-04-23 18:15:21 / 修改时间：18:15:36" itemprop="dateCreated datePublished" datetime="2021-04-23T18:15:21+08:00">2021-04-23</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>虽然 Webpack 看上去无所不能，但从其本质上来说，Webpack 实质就是一个“前端模块打包器”。前端模块打包器做的事情很简单：它帮助开发者将 JavaScript 模块（各种类型的模块化规范）打包为一个或多个 JavaScript 脚本文件。</p>
+<p>回到最初起源：前端为什么需要一个模块打包器呢？其实理由很简单：</p>
+<ul>
+<li>不是所有浏览器都直接支持javascript</li>
+<li>前端需要管理依赖脚本，把控不同脚本加载的顺序</li>
+<li>前端需要按需加载不同类型的静态资源</li>
+</ul>
+<p>想想一下，我们的 Web应用有这样一段内容：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">&quot;/src/1.js&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">&quot;/src/2.js&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">&quot;/src/3.js&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">&quot;/src/4.js&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">&quot;/src/5.js&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">&quot;/src/6.js&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>每个javascript文件都需要额外的HTTP请求获取，并且因为依赖关系，1.js到6.js需要按顺序加载。因此，打包需求应运而生：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">&quot;/dist/bundle.js&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>这里需要注意几点：</p>
+<ul>
+<li>随着HTTP/2技术的推广，未来长远上看，浏览器像上述代码一样发送多个请求不再是性能瓶颈，但目前来看还过于乐观</li>
+<li>并不是将所有脚本都打包在一起就是性能最优，<code>/dist/bundle.js</code> 的size一般较大，但这属于另外的 <code>性能优化</code>话题了</li>
+</ul>
+<p>总之，打包器的需求就是前端“刚需”，实现上述打包需要也并不简单，需要考虑：</p>
+<ul>
+<li>如何维护不同脚本的打包顺序，保证<code>bundle.js</code>的可用性</li>
+<li>如何避免不同脚本、不同模块的命名冲突</li>
+<li>在打包过程中，如何确定真正需要的脚本，而不将没有用到的脚本排除在 <code>bundle.js</code> 之外</li>
+</ul>
+<p>事实上，虽然当前 <code>webpack</code> 依靠loader机制实现了对于不同类型资源的解析和打包，依靠插件机制实现了第三方介入编译构建的过程，但究其本质，webpack只是一个“无所不能”的打包器，实现了：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">a.js + b.js + c.js. &#x3D;&gt; bundle.js</span><br></pre></td></tr></table></figure>
+
+<p>为了简化，以ESM模块化规范举例。假设我们有：</p>
+<ul>
+<li>circle.js模块求圆形面积</li>
+<li>square.js模块求正方形面积</li>
+<li>app.js模块作为主模块</li>
+</ul>
+<p>对应内容分别如下代码：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> PI = <span class="number">3.141</span>;</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> <span class="function"><span class="keyword">function</span> <span class="title">area</span>(<span class="params">radius</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> PI * radius * radius;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// filename: square.js</span></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> <span class="function"><span class="keyword">function</span> <span class="title">area</span>(<span class="params">side</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> side * side;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// filename: app.js</span></span><br><span class="line"><span class="keyword">import</span> squareArea <span class="keyword">from</span> <span class="string">&#x27;./square&#x27;</span>;</span><br><span class="line"><span class="keyword">import</span> circleArea <span class="keyword">from</span> <span class="string">&#x27;./circle&#x27;</span>;</span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">&#x27;Area of square: &#x27;</span>, squareArea(<span class="number">5</span>));</span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">&#x27;Area of circle&#x27;</span>, circleArea(<span class="number">5</span>));</span><br></pre></td></tr></table></figure>
+
+<p>经过 Webpack 打包之后，我们用 <code>bundle.js</code> 来表示 Webpack 处理结果</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// filename: bundle.js</span></span><br><span class="line"><span class="keyword">const</span> modules = &#123;</span><br><span class="line">  <span class="string">&#x27;circle.js&#x27;</span>: <span class="function"><span class="keyword">function</span>(<span class="params"><span class="built_in">exports</span>, <span class="built_in">require</span></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">const</span> PI = <span class="number">3.141</span>;</span><br><span class="line">    <span class="built_in">exports</span>.default = <span class="function"><span class="keyword">function</span> <span class="title">area</span>(<span class="params">radius</span>) </span>&#123;</span><br><span class="line">      <span class="keyword">return</span> PI * radius * radius;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="string">&#x27;square.js&#x27;</span>: <span class="function"><span class="keyword">function</span>(<span class="params"><span class="built_in">exports</span>, <span class="built_in">require</span></span>) </span>&#123;</span><br><span class="line">    <span class="built_in">exports</span>.default = <span class="function"><span class="keyword">function</span> <span class="title">area</span>(<span class="params">side</span>) </span>&#123;</span><br><span class="line">      <span class="keyword">return</span> side * side;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="string">&#x27;app.js&#x27;</span>: <span class="function"><span class="keyword">function</span>(<span class="params"><span class="built_in">exports</span>, <span class="built_in">require</span></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">const</span> squareArea = <span class="built_in">require</span>(<span class="string">&#x27;square.js&#x27;</span>).default;</span><br><span class="line">    <span class="keyword">const</span> circleArea = <span class="built_in">require</span>(<span class="string">&#x27;circle.js&#x27;</span>).default;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">&#x27;Area of square: &#x27;</span>, squareArea(<span class="number">5</span>))</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">&#x27;Area of circle&#x27;</span>, circleArea(<span class="number">5</span>))</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line">webpackBundle(&#123;</span><br><span class="line">  modules,</span><br><span class="line">  entry: <span class="string">&#x27;app.js&#x27;</span></span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>如上代码，我们维护了 <code>module</code> 变量，存储了不同模块信息，这个map中，key为模块路径名，value为一个被 wrapped 过的模块函数，我们先称之为 <code>module factory function</code> ， 该函数形如：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span>(<span class="params"><span class="built_in">exports</span>, <span class="built_in">require</span></span>) </span>&#123;</span><br><span class="line">	<span class="comment">// 模块内容</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这样做是为每个模块提供exports和require能力，同时保证了每个模块都处于一个隔离的函数作用域范围。</p>
+<p>有了modules变量还不够，我们依赖webpackBundle方法，将所有内容整合在一起。webpackBundle方法接收modules模块信息以及一个入口脚本。代码如下：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">webpackBundle</span>(<span class="params">&#123; modules, entry &#125;</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">const</span> moduleCache = &#123;&#125;;</span><br><span class="line">  </span><br><span class="line">  <span class="keyword">const</span> <span class="built_in">require</span> = <span class="function"><span class="params">moduleName</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="comment">// 如果已经解析并缓存过，直接返回缓存内容</span></span><br><span class="line">    <span class="keyword">if</span> (moduleCache[moduleName]) &#123;</span><br><span class="line">      <span class="keyword">return</span> moduleCache[moduleName];</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">const</span> <span class="built_in">exports</span> = &#123;&#125;;</span><br><span class="line">    <span class="comment">// 这里是为了防止循环引用</span></span><br><span class="line">    moduleCache[moduleName] = <span class="built_in">exports</span>;</span><br><span class="line">    <span class="comment">// 执行模块内容，如果遇见了 require 方法，则继续递归执行 require 方法 </span></span><br><span class="line">    modules[moduleName](<span class="built_in">exports</span>, <span class="built_in">require</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> moduleCache[moduleName];</span><br><span class="line">  &#125;;</span><br><span class="line">  <span class="built_in">require</span>(entry);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="手动实现打包器"><a href="#手动实现打包器" class="headerlink" title="手动实现打包器"></a>手动实现打包器</h3><p>核心思路如下：</p>
+<ol>
+<li>读取入口文件 (比如entry.js)</li>
+<li>基于AST分析入口文件，并产出依赖列表</li>
+<li>使用Babel将相关模块编译到ES5</li>
+<li>对每个依赖模块产出一个唯一的ID，方便后续读取模块相关内容</li>
+<li>将每个依赖以及经过的Babel编译过后的内容，存储在一个对象中维护</li>
+<li>遍历上一步中的对象，构建出一个依赖图</li>
+<li>将各模块内容bundle产出</li>
+</ol>
+<p>首先创建项目：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mkdir bundler-playground &amp;&amp; cd $_</span><br></pre></td></tr></table></figure>
+
+<p>并启动npm</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm init -y</span><br></pre></td></tr></table></figure>
+
+<p>安装以下依赖：</p>
+<ul>
+<li>@babel/parser用于分析源代码，产出 AST；</li>
+<li>@babel/traverse用于遍历 AST，找到 import 声明；</li>
+<li>@babel/core用于编译，将源代码编译为 ES5；</li>
+<li>@babel/preset-env搭配@babel/core使用；</li>
+<li>resolve用于获取依赖的绝对路径。</li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/04/23/%E5%B7%A5%E7%A8%8B%E5%8C%96%E6%80%9D%E7%BB%B4%E5%A4%84%E7%90%86%E6%96%B9%E6%A1%88%EF%BC%9A%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E5%BA%94%E7%94%A8%E4%B8%BB%E9%A2%98%E5%88%87%E6%8D%A2%E5%8A%9F%E8%83%BD/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Choo">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Choo'blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/04/23/%E5%B7%A5%E7%A8%8B%E5%8C%96%E6%80%9D%E7%BB%B4%E5%A4%84%E7%90%86%E6%96%B9%E6%A1%88%EF%BC%9A%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E5%BA%94%E7%94%A8%E4%B8%BB%E9%A2%98%E5%88%87%E6%8D%A2%E5%8A%9F%E8%83%BD/" class="post-title-link" itemprop="url">工程化思维处理方案：如何实现应用主题切换功能</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-04-23 18:14:46 / 修改时间：18:15:01" itemprop="dateCreated datePublished" datetime="2021-04-23T18:14:46+08:00">2021-04-23</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>在前端基础建设中，样式方案的处理也必不可少</p>
+<h3 id="设计一个主题切换工程架构"><a href="#设计一个主题切换工程架构" class="headerlink" title="设计一个主题切换工程架构"></a>设计一个主题切换工程架构</h3><p>随着 iOS 13 引入 Dark Mode（深色模式），各大应用和网站也都开始支持深色模式。相比传统的页面配色方案，深色模式具有较好的降噪性，也能让用户的眼睛看内容更舒适</p>
+<h4 id="PostCSS-原理和相关插件能力"><a href="#PostCSS-原理和相关插件能力" class="headerlink" title="PostCSS 原理和相关插件能力"></a>PostCSS 原理和相关插件能力</h4><p>简单来说， PostCSS 是一款编译 CSS 的工具。</p>
+<blockquote>
+<p>PostCSS is a tool for transforming styles with JS plugins. These plugins can lint your CSS, support variables and mixins, transpile future CSS syntax, inline images, and more.</p>
+</blockquote>
+<p>如上介绍，postCSS具有良好的插件性，其插件也是使用 javascript 编写的，非常有利于开发者拓展。PostCSS的工作原理：<strong>PostCSS接收一个CSS文件，并提供了插件机制，提供给开发者分析、修改CSS的规则，具体实现方式也是基于AST技术</strong></p>
+<h4 id="架构思路总结"><a href="#架构思路总结" class="headerlink" title="架构思路总结"></a>架构思路总结</h4><p>主题切换——社区上介绍的方案往往通过 CSS 变量（CSS 自定义属性）来实现</p>
+<p>这无疑是一个很好的思路，但是作为架构来说，使用 CSS 自定义属性——只是其中一个环节。站在更高、更中台化的视觉思考，我们还需要设计：</p>
+<ul>
+<li>如何维护不同主题色值</li>
+<li>谁来维护不同颜色值</li>
+<li>研发和设计之间，如何保持不同颜色值的同步沟通</li>
+<li>如何最小化前端工程师的开发量，不需要 hard coding 两份颜色数值</li>
+<li>如何做到一键切换时的性能最优</li>
+<li>如何配合javascript状态管理，同步主题切换的信号</li>
+</ul>
+<p>基于以上考虑，以一个超链接样式为例，我们希望做到开发时，编写：</p>
+<figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="selector-tag">a</span> &#123;</span><br><span class="line">  <span class="attribute">color</span>: <span class="built_in">cc</span>(GBK05A);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这样的代码，就能一劳永逸直接支持两套主题模式。也就是说，在应用编译上，上述代码预期被编译为下面这样的代码：</p>
+<figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="selector-tag">a</span> &#123;</span><br><span class="line">  <span class="attribute">color</span>: <span class="number">#646464</span>;</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="selector-tag">html</span><span class="selector-attr">[data-theme=<span class="string">&#x27;dark&#x27;</span>]</span> <span class="selector-tag">a</span> &#123;</span><br><span class="line">  <span class="attribute">color</span>: <span class="number">#808080</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们来看看在编译时，构建环节发生了什么：</p>
+<ul>
+<li><code>cc(GBK05A)</code> 这样的声明，被编译为<code>#646464</code></li>
+<li>也就是说，<code>cc</code> 是一个CSS function，而 <code>GBK05A</code>是一组色值，分别包含了light和dark两种主题的颜色</li>
+<li>同时在HTML根节点上，添加属性选择器 <code>data-theme=&#39;dark&#39;</code>，并添加 <code>a</code> 标签color色值样式为 <code>#808080</code></li>
+</ul>
+<p>我们设想，用户点击“切换主题”按钮时，首先通过 Javascript 将 HTML 根节点标签添加 data-theme 为dark的属性值，这时CSS选择器html[data-theme=’dark’] a 将起作用，实现了样式的切换</p>
+<p>结合下图理解：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2021/png/259122/1614328790718-2815b58a-248e-4524-af75-851a576659e6.png" alt="描述"></p>
+<p>如何在构建时完成 CSS 的样式编译转换呢？答案指向了 PostCSS</p>
+<ul>
+<li>首先编写一个名为 postcss-theme-colors 的PostCSS插件</li>
+<li>维护一个色值，结合上例子就是:</li>
+</ul>
+<figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">GBK05A: [BK05, BK06]</span><br><span class="line">BK05: <span class="string">&#x27;#808080&#x27;</span></span><br><span class="line">BK06: <span class="string">&#x27;#999999&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>postcss-theme-colors需要：</p>
+<ol>
+<li>识别 <code>cc()</code> 方法</li>
+<li>读取色值</li>
+<li>通过色值，对 <code>cc()</code> 方法求值，得到两种颜色，分别对应 dark 和 light 模式</li>
+<li>原地编译 CSS 中的颜色为 light 模式色值</li>
+<li>同时 dark 模式色值写到 HTML 节点上</li>
+</ol>
+<p>这里需要补充的是，为了将 dark 模式色值按照 html[data-theme=’dark’] 方式写到 HTML 节点上，需要使用另外两个PostCSS插件完成：</p>
+<ul>
+<li>PostCSS Nested</li>
+<li>PostCSS Nesting</li>
+</ul>
+<p>整体架构设计，总结为下图：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2021/png/259122/1614584969713-a0014b6b-62df-45aa-9be6-19dd959ee910.png" alt="描述"></p>
+<h3 id="主题色架构实现"><a href="#主题色架构实现" class="headerlink" title="主题色架构实现"></a>主题色架构实现</h3><h4 id="PostCSS-插件体系"><a href="#PostCSS-插件体系" class="headerlink" title="PostCSS 插件体系"></a>PostCSS 插件体系</h4><p>PostCSS具有天生的插件化体系，开发者一般很容易上手插件开发</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> postcss = <span class="built_in">require</span>(<span class="string">&#x27;postcss&#x27;</span>);</span><br><span class="line"><span class="built_in">module</span>.exports = postcss.plugin(<span class="string">&#x27;pluginname&#x27;</span>, <span class="function"><span class="keyword">function</span> (<span class="params">opts</span>) </span>&#123;</span><br><span class="line">  opts = opts || &#123;&#125;;</span><br><span class="line">  <span class="comment">// Work with options here</span></span><br><span class="line">  <span class="keyword">return</span> <span class="function"><span class="keyword">function</span> (<span class="params">css, result</span>) </span>&#123;</span><br><span class="line">    <span class="comment">// Transform the CSS AST</span></span><br><span class="line">  &#125;;</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+<p>上面代码是一个典型的PostCSS插件编写模版。一个PostCSS就是一个Node.js模块，开发者调用 <code>postcss.plugin</code> 工厂方法返回一个插件实体：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">return</span> &#123;</span><br><span class="line">    postcssPlugin: <span class="string">&#x27;PLUGIN_NAME&#x27;</span>,</span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">    Root (root, postcss) &#123;</span></span><br><span class="line"><span class="comment">      // Transform CSS AST here</span></span><br><span class="line"><span class="comment">    &#125;</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">    Declaration (decl, postcss) &#123;</span></span><br><span class="line"><span class="comment">      // The faster way to find Declaration node</span></span><br><span class="line"><span class="comment">    &#125;</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">    Declaration: &#123;</span></span><br><span class="line"><span class="comment">      color: (decl, postcss) &#123;</span></span><br><span class="line"><span class="comment">        // The fastest way find Declaration node if you know property name</span></span><br><span class="line"><span class="comment">      &#125;</span></span><br><span class="line"><span class="comment">    &#125;</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在编写 PostCSS 插件时，我们可以直接使用postcss.plugin方法完成实际开发。接下来，开始动手实现 postcss-theme-colors。</p>
+<h3 id="动手实现postcss-theme-colors"><a href="#动手实现postcss-theme-colors" class="headerlink" title="动手实现postcss-theme-colors"></a>动手实现postcss-theme-colors</h3><p>具体实现逻辑，代码如下：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> postcss = <span class="built_in">require</span>(<span class="string">&#x27;postcss&#x27;</span>)</span><br><span class="line"><span class="keyword">const</span> defaults = &#123;</span><br><span class="line">  <span class="function"><span class="keyword">function</span>: &#x27;<span class="title">cc</span>&#x27;,</span></span><br><span class="line"><span class="function">  <span class="title">groups</span>: </span>&#123;&#125;,</span><br><span class="line">  colors: &#123;&#125;,</span><br><span class="line">  useCustomProperties: <span class="literal">false</span>,</span><br><span class="line">  darkThemeSelector: <span class="string">&#x27;html[data-theme=&quot;dark&quot;]&#x27;</span>,</span><br><span class="line">  nestingPlugin: <span class="literal">null</span>,</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">const</span> resolveColor = <span class="function">(<span class="params">options, theme, group, defaultValue</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">const</span> [lightColor, darkColor] = options.groups[group] || []</span><br><span class="line">  <span class="keyword">const</span> color = theme === <span class="string">&#x27;dark&#x27;</span> ? darkColor : lightColor</span><br><span class="line">  <span class="keyword">if</span> (!color) &#123;</span><br><span class="line">    <span class="keyword">return</span> defaultValue</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (options.useCustomProperties) &#123;</span><br><span class="line">    <span class="keyword">return</span> color.startsWith(<span class="string">&#x27;--&#x27;</span>) ? <span class="string">`var(<span class="subst">$&#123;color&#125;</span>)`</span> : <span class="string">`var(--<span class="subst">$&#123;color&#125;</span>)`</span></span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> options.colors[color] || defaultValue</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">module</span>.exports = postcss.plugin(<span class="string">&#x27;postcss-theme-colors&#x27;</span>, <span class="function"><span class="params">options</span> =&gt;</span> &#123;</span><br><span class="line">  options = <span class="built_in">Object</span>.assign(&#123;&#125;, defaults, options)</span><br><span class="line">  <span class="comment">// 获取色值函数（默认为 cc()）</span></span><br><span class="line">  <span class="keyword">const</span> reGroup = <span class="keyword">new</span> <span class="built_in">RegExp</span>(<span class="string">`\\b<span class="subst">$&#123;options.<span class="keyword">function</span>&#125;</span>\\(([^)]+)\\)`</span>, <span class="string">&#x27;g&#x27;</span>)</span><br><span class="line">  <span class="keyword">return</span> <span class="function">(<span class="params">style, result</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="comment">// 判断 PostCSS 工作流程中，是否使用了某些 plugins</span></span><br><span class="line">    <span class="keyword">const</span> hasPlugin = <span class="function"><span class="params">name</span> =&gt;</span></span><br><span class="line">      name.replace(<span class="regexp">/^postcss-/</span>, <span class="string">&#x27;&#x27;</span>) === options.nestingPlugin ||</span><br><span class="line">      result.processor.plugins.some(<span class="function"><span class="params">p</span> =&gt;</span> p.postcssPlugin === name)</span><br><span class="line">    <span class="comment">// 获取最终 CSS 值</span></span><br><span class="line">    <span class="keyword">const</span> getValue = <span class="function">(<span class="params">value, theme</span>) =&gt;</span> &#123;</span><br><span class="line">      <span class="keyword">return</span> value.replace(reGroup, <span class="function">(<span class="params">match, group</span>) =&gt;</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> resolveColor(options, theme, group, match)</span><br><span class="line">      &#125;)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 遍历 CSS 声明</span></span><br><span class="line">    style.walkDecls(<span class="function"><span class="params">decl</span> =&gt;</span> &#123;</span><br><span class="line">      <span class="keyword">const</span> value = decl.value</span><br><span class="line">      <span class="comment">// 如果不含有色值函数调用，则提前退出</span></span><br><span class="line">      <span class="keyword">if</span> (!value || !reGroup.test(value)) &#123;</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">const</span> lightValue = getValue(value, <span class="string">&#x27;light&#x27;</span>) </span><br><span class="line">      <span class="keyword">const</span> darkValue = getValue(value, <span class="string">&#x27;dark&#x27;</span>) </span><br><span class="line">      <span class="keyword">const</span> darkDecl = decl.clone(&#123;<span class="attr">value</span>: darkValue&#125;)</span><br><span class="line">      <span class="keyword">let</span> darkRule</span><br><span class="line">      <span class="comment">// 使用插件，生成 dark 样式</span></span><br><span class="line">      <span class="keyword">if</span> (hasPlugin(<span class="string">&#x27;postcss-nesting&#x27;</span>)) &#123;</span><br><span class="line">        darkRule = postcss.atRule(&#123;</span><br><span class="line">          name: <span class="string">&#x27;nest&#x27;</span>,</span><br><span class="line">          params: <span class="string">`<span class="subst">$&#123;options.darkThemeSelector&#125;</span> &amp;`</span>,</span><br><span class="line">        &#125;)</span><br><span class="line">      &#125; <span class="keyword">else</span> <span class="keyword">if</span> (hasPlugin(<span class="string">&#x27;postcss-nested&#x27;</span>)) &#123;</span><br><span class="line">        darkRule = postcss.rule(&#123;</span><br><span class="line">          selector: <span class="string">`<span class="subst">$&#123;options.darkThemeSelector&#125;</span> &amp;`</span>,</span><br><span class="line">        &#125;)</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        decl.warn(result, <span class="string">`Plugin(postcss-nesting or postcss-nested) not found`</span>)</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="comment">// 添加 dark 样式到目标 HTML 节点中</span></span><br><span class="line">      <span class="keyword">if</span> (darkRule) &#123;</span><br><span class="line">        darkRule.append(darkDecl)</span><br><span class="line">        decl.after(darkRule)</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">const</span> lightDecl = decl.clone(&#123;<span class="attr">value</span>: lightValue&#125;)</span><br><span class="line">      decl.replaceWith(lightDecl)</span><br><span class="line">    &#125;)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+<p>理解了这部分源码，使用方式也就呼之欲出了：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">const colors &#x3D; &#123;</span><br><span class="line">  C01: &#39;#eee&#39;,</span><br><span class="line">  C02: &#39;#111&#39;,</span><br><span class="line">&#125;</span><br><span class="line">const groups &#x3D; &#123;</span><br><span class="line">  G01: [&#39;C01&#39;, &#39;C02&#39;],</span><br><span class="line">&#125;</span><br><span class="line">postcss([</span><br><span class="line">  require(&#39;postcss-theme-colors&#39;)(&#123;colors, groups&#125;),</span><br><span class="line">]).process(css)</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/04/23/%E4%BB%A3%E7%A0%81%E6%8B%86%E5%88%86%E5%92%8C%E6%8C%89%E9%9C%80%E5%8A%A0%E8%BD%BD/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Choo">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Choo'blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/04/23/%E4%BB%A3%E7%A0%81%E6%8B%86%E5%88%86%E5%92%8C%E6%8C%89%E9%9C%80%E5%8A%A0%E8%BD%BD/" class="post-title-link" itemprop="url">代码拆分和按需加载</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-04-23 18:14:13 / 修改时间：18:14:24" itemprop="dateCreated datePublished" datetime="2021-04-23T18:14:13+08:00">2021-04-23</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="按需加载和按需打包区分"><a href="#按需加载和按需打包区分" class="headerlink" title="按需加载和按需打包区分"></a>按需加载和按需打包区分</h3><p>从技术角度介绍按需加载概念前，我们需要先和另外一个概念：<strong>按需打包</strong>，进行区分。事实上，当前社区对于按需加载和按需打包并没有一个准确的命名伤的划分约定。因此从两者命名上，难以区分其实际含义。</p>
+<p>其实，按需加载表示代码模块在交互需要时，动态引入；而按需打包针对第三方依赖库，及业务模块，只打包真正在运行时可能会需要的代码。</p>
+<p>我们不妨先说明按需打包的概念和实施方法，目前按需打包一般通过两种方式进行：</p>
+<ul>
+<li>使用ES Module 支持的 Tree Shaking方案，在使用构建工具打包时，完成按需打包；</li>
+<li>使用以babel-plugin-import为主的Babel插件，实现自动按需打包；</li>
+</ul>
+<p>**Tres Shaking实现按需打包</p>
+<p>来看一个场景，假设业务中使用 antd 导出来的内容。假设应用中并没有使用 antd 提供的TimePicker组件，那么对于打包结果来说，无疑增加了代码体积。在这种情况下，如果组件库提供了ES Module版本，并开启 Tree Shaking，我们就可以通过“摇树”特性，将不会被使用的代码在构建阶段排除</p>
+<p>Webpack 可以在 package.json 中设置sideEffects: false</p>
+<h3 id="学习编写Babel插件，实现按需打包"><a href="#学习编写Babel插件，实现按需打包" class="headerlink" title="学习编写Babel插件，实现按需打包"></a>学习编写Babel插件，实现按需打包</h3><p>如果第三方库不支持 Tree Shaking，我们依然可以通过 Babel 插件，改变业务代码中对模块的引用路径来实现按需打包。</p>
+<p>比如 babel-plugin-import 这个插件，它是 antd 团队推出的一个 Babel 插件，我们通过一个例子来理解它的原理，比如：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123;Button <span class="keyword">as</span> Btn,Input,TimePicker,ConfigProvider,Haaaa&#125; <span class="keyword">from</span> <span class="string">&#x27;antd&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>这样代码就可以被编译为</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> _ConfigProvider <span class="keyword">from</span> <span class="string">&quot;antd/lib/config-provider&quot;</span>;</span><br><span class="line"><span class="keyword">import</span> _Button <span class="keyword">from</span> <span class="string">&quot;antd/lib/button&quot;</span>;</span><br><span class="line"><span class="keyword">import</span> _Input <span class="keyword">from</span> <span class="string">&quot;antd/lib/input&quot;</span>;</span><br><span class="line"><span class="keyword">import</span> _TimePicker <span class="keyword">from</span> <span class="string">&quot;antd/lib/time-picker&quot;</span>;</span><br></pre></td></tr></table></figure>
+
+<p>编写一个类似的Babel插件也不是难事，Babel插件核心以来于对AST的解析和依赖。<strong>它本质上就是一个函数，在Babel 对 AST 语法树进行转换的过程中介入，通过相应的操作，最终让生成的结果发生改变</strong></p>
+<p>Babel已经内置了几个核心分析，操作AST的工具集，Babel插件通过观察者 + 访问者模式，对AST节点统一遍历，因此具备了酿好的拓展性和灵活性，比如这段代码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">import &#123;Button as Btn, Input&#125; from &#39;antd&#39;</span><br></pre></td></tr></table></figure>
+
+<p>这样的代码，经过 Babel AST 分析后，得到结构：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;ImportDeclaration&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;specifiers&quot;</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;ImportSpecifier&quot;</span>,</span><br><span class="line">            <span class="attr">&quot;imported&quot;</span>: &#123;</span><br><span class="line">                <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;Identifier&quot;</span>,</span><br><span class="line">                <span class="attr">&quot;loc&quot;</span>: &#123;</span><br><span class="line">                    <span class="attr">&quot;identifierName&quot;</span>: <span class="string">&quot;Button&quot;</span></span><br><span class="line">                &#125;,</span><br><span class="line">                <span class="attr">&quot;name&quot;</span>: <span class="string">&quot;Button&quot;</span></span><br><span class="line">            &#125;,</span><br><span class="line">            <span class="attr">&quot;importKind&quot;</span>: <span class="literal">null</span>,</span><br><span class="line">            <span class="attr">&quot;local&quot;</span>: &#123;</span><br><span class="line">                <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;Identifier&quot;</span>,</span><br><span class="line">                <span class="attr">&quot;loc&quot;</span>: &#123;</span><br><span class="line">                    <span class="attr">&quot;identifierName&quot;</span>: <span class="string">&quot;Btn&quot;</span></span><br><span class="line">                &#125;,</span><br><span class="line">                <span class="attr">&quot;name&quot;</span>: <span class="string">&quot;Btn&quot;</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;ImportSpecifier&quot;</span>,</span><br><span class="line">            <span class="attr">&quot;imported&quot;</span>: &#123;</span><br><span class="line">                <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;Identifier&quot;</span>,</span><br><span class="line">                <span class="attr">&quot;loc&quot;</span>: &#123;</span><br><span class="line">                    <span class="attr">&quot;identifierName&quot;</span>: <span class="string">&quot;Input&quot;</span></span><br><span class="line">                &#125;,</span><br><span class="line">                <span class="attr">&quot;name&quot;</span>: <span class="string">&quot;Input&quot;</span></span><br><span class="line">            &#125;,</span><br><span class="line">            <span class="attr">&quot;importKind&quot;</span>: <span class="literal">null</span>,</span><br><span class="line">            <span class="attr">&quot;local&quot;</span>: &#123;</span><br><span class="line">                <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;Identifier&quot;</span>,</span><br><span class="line">                <span class="attr">&quot;start&quot;</span>: <span class="number">23</span>,</span><br><span class="line">                <span class="attr">&quot;end&quot;</span>: <span class="number">28</span>,</span><br><span class="line">                <span class="attr">&quot;loc&quot;</span>: &#123;</span><br><span class="line">                    <span class="attr">&quot;identifierName&quot;</span>: <span class="string">&quot;Input&quot;</span></span><br><span class="line">                &#125;,</span><br><span class="line">                <span class="attr">&quot;name&quot;</span>: <span class="string">&quot;Input&quot;</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    ],</span><br><span class="line">    <span class="attr">&quot;importKind&quot;</span>: <span class="string">&quot;value&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;source&quot;</span>: &#123;</span><br><span class="line">        <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;StringLiteral&quot;</span>,</span><br><span class="line">        <span class="attr">&quot;value&quot;</span>: <span class="string">&quot;antd&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>通过上述结构，我们很容易实现遍历 specifiers 属性</p>
+<p>首先通过 <code>buildExpressionHandler</code> 方法对 import 路径进行改写：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">buildExpressionHandler(node, props, path, state) &#123;</span><br><span class="line">    &#x2F;&#x2F; 获取文件</span><br><span class="line">    const file &#x3D; (path &amp;&amp; path.hub &amp;&amp; path.hub.file) || (state &amp;&amp; state.file);</span><br><span class="line">    const &#123; types &#125; &#x3D; this;</span><br><span class="line">    const pluginState &#x3D; this.getPluginState(state);</span><br><span class="line">    &#x2F;&#x2F; 进行遍历</span><br><span class="line">    props.forEach(prop &#x3D;&gt; &#123;</span><br><span class="line">      if (!types.isIdentifier(node[prop])) return;</span><br><span class="line">      if (</span><br><span class="line">        pluginState.specified[node[prop].name] &amp;&amp;</span><br><span class="line">        types.isImportSpecifier(path.scope.getBinding(node[prop].name).path)</span><br><span class="line">      ) &#123;</span><br><span class="line">        &#x2F;&#x2F; 修改路径内容</span><br><span class="line">        node[prop] &#x3D; this.importMethod(pluginState.specified[node[prop].name], file, pluginState); &#x2F;&#x2F; eslint-disable-line</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>buildExpressionHandler 方法依赖 importMethod 方法：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="title">importMethod</span>(<span class="params">methodName, file, pluginState</span>)</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (!pluginState.selectedMethods[methodName]) &#123;</span><br><span class="line">      <span class="keyword">const</span> &#123; style, libraryDirectory &#125; = <span class="built_in">this</span>;</span><br><span class="line">      <span class="comment">// 获取执行方法名</span></span><br><span class="line">      <span class="keyword">const</span> transformedMethodName = <span class="built_in">this</span>.camel2UnderlineComponentName <span class="comment">// eslint-disable-line</span></span><br><span class="line">        ? transCamel(methodName, <span class="string">&#x27;_&#x27;</span>)</span><br><span class="line">        : <span class="built_in">this</span>.camel2DashComponentName</span><br><span class="line">        ? transCamel(methodName, <span class="string">&#x27;-&#x27;</span>)</span><br><span class="line">        : methodName;</span><br><span class="line">      <span class="comment">// 获取相应路径</span></span><br><span class="line">      <span class="keyword">const</span> path = winPath(</span><br><span class="line">        <span class="built_in">this</span>.customName</span><br><span class="line">          ? <span class="built_in">this</span>.customName(transformedMethodName, file)</span><br><span class="line">          : join(<span class="built_in">this</span>.libraryName, libraryDirectory, transformedMethodName, <span class="built_in">this</span>.fileName), <span class="comment">// eslint-disable-line</span></span><br><span class="line">      );</span><br><span class="line">      pluginState.selectedMethods[methodName] = <span class="built_in">this</span>.transformToDefaultImport <span class="comment">// eslint-disable-line</span></span><br><span class="line">        ? addDefault(file.path, path, &#123; <span class="attr">nameHint</span>: methodName &#125;)</span><br><span class="line">        : addNamed(file.path, methodName, path);</span><br><span class="line">      <span class="keyword">if</span> (<span class="built_in">this</span>.customStyleName) &#123;</span><br><span class="line">        <span class="keyword">const</span> stylePath = winPath(<span class="built_in">this</span>.customStyleName(transformedMethodName));</span><br><span class="line">        addSideEffect(file.path, <span class="string">`<span class="subst">$&#123;stylePath&#125;</span>`</span>);</span><br><span class="line">      &#125; <span class="keyword">else</span> <span class="keyword">if</span> (<span class="built_in">this</span>.styleLibraryDirectory) &#123;</span><br><span class="line">        <span class="keyword">const</span> stylePath = winPath(</span><br><span class="line">          join(<span class="built_in">this</span>.libraryName, <span class="built_in">this</span>.styleLibraryDirectory, transformedMethodName, <span class="built_in">this</span>.fileName),</span><br><span class="line">        );</span><br><span class="line">        addSideEffect(file.path, <span class="string">`<span class="subst">$&#123;stylePath&#125;</span>`</span>);</span><br><span class="line">      &#125; <span class="keyword">else</span> <span class="keyword">if</span> (style === <span class="literal">true</span>) &#123;</span><br><span class="line">        addSideEffect(file.path, <span class="string">`<span class="subst">$&#123;path&#125;</span>/style`</span>);</span><br><span class="line">      &#125; <span class="keyword">else</span> <span class="keyword">if</span> (style === <span class="string">&#x27;css&#x27;</span>) &#123;</span><br><span class="line">        addSideEffect(file.path, <span class="string">`<span class="subst">$&#123;path&#125;</span>/style/css`</span>);</span><br><span class="line">      &#125; <span class="keyword">else</span> <span class="keyword">if</span> (<span class="keyword">typeof</span> style === <span class="string">&#x27;function&#x27;</span>) &#123;</span><br><span class="line">        <span class="keyword">const</span> stylePath = style(path, file);</span><br><span class="line">        <span class="keyword">if</span> (stylePath) &#123;</span><br><span class="line">          addSideEffect(file.path, stylePath);</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> &#123; ...pluginState.selectedMethods[methodName] &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>importMethod方法调用了@babel/helper-module-imports中的addSideEffect方法执行路径的转换操作。addSideEffect方法在源码中通过实例化一个 Import Injector，并调用实例方法完成了 AST 转换</p>
+<h3 id="“重新认识”-dynamic-import-动态导入"><a href="#“重新认识”-dynamic-import-动态导入" class="headerlink" title="“重新认识” dynamic import (动态导入)"></a>“重新认识” dynamic import (动态导入)</h3><p><strong>静态导入的性能优劣</strong></p>
+<p>标准用法的 import 属于静态导入，它只支持一个字符串类型的 module specifier（模块路径声明），这样的特性会使所有被 import 的模块在加载时就被编译。从某些角度看，这种做法对于绝大多数场景来说性能是友好的，因为这意味着对工程代码的静态分析成为可能，进而使得类似 tree-shaking 的技术有了应用空间。</p>
+<p>但是对于一些特殊场景，静态导入也可能成为性能的短板，比如，当我们需要：</p>
+<ul>
+<li>按需加载一个模块</li>
+<li>按运行事件选定一个模块</li>
+</ul>
+<p>此时，dynamic import 就变得尤为重要。比如在浏览器，根据用户的系统语言选择加载不同的语言模块，根据用户的操作去加载不同的内容逻辑</p>
+<p>MDN 文档中给出了 dynamic import 更具体的使用场景：</p>
+<ul>
+<li>静态导入的模块很明显降低了代码的加载速度且被使用的可能性很低，或者并不需要马上使用它</li>
+<li>静态导入的模块很明显占用了大量系统内存且被使用的可能性很低</li>
+<li>被导入的模块在加载时并不存在，需要异步获取</li>
+<li>导入模块的说明符，需要动态创建</li>
+<li>被导入的模块有副作用</li>
+</ul>
+<p><em>dynamic import（动态导入）</em>*</p>
+<p>dynamicImport 函数实现如下：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> importModule = <span class="function"><span class="params">url</span> =&gt;</span> &#123;</span><br><span class="line">  <span class="comment">// 返回一个新的 Promise 实例</span></span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function">(<span class="params">resolve, reject</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="comment">// 创建 script 标签</span></span><br><span class="line">    <span class="keyword">const</span> script = <span class="built_in">document</span>.createElement(<span class="string">&quot;script&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> tempGlobal = <span class="string">&quot;__tempModuleLoadingVariable&quot;</span> + <span class="built_in">Math</span>.random().toString(<span class="number">32</span>).substring(<span class="number">2</span>);</span><br><span class="line"></span><br><span class="line">    script.type = <span class="string">&quot;module&quot;</span>;</span><br><span class="line">    script.textContent = <span class="string">`import * as m from &quot;<span class="subst">$&#123;url&#125;</span>&quot;; window.<span class="subst">$&#123;tempGlobal&#125;</span> = m;`</span>;</span><br><span class="line">    <span class="comment">// load 回调</span></span><br><span class="line">    script.onload = <span class="function">() =&gt;</span> &#123;</span><br><span class="line">      resolve(<span class="built_in">window</span>[tempGlobal]);</span><br><span class="line">      <span class="keyword">delete</span> <span class="built_in">window</span>[tempGlobal];</span><br><span class="line">      script.remove();</span><br><span class="line">    &#125;;</span><br><span class="line">    <span class="comment">// error 回调</span></span><br><span class="line">    script.onerror = <span class="function">() =&gt;</span> &#123;</span><br><span class="line">      reject(<span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">&quot;Failed to load module script with URL &quot;</span> + url));</span><br><span class="line">      <span class="keyword">delete</span> <span class="built_in">window</span>[tempGlobal];</span><br><span class="line">      script.remove();</span><br><span class="line">    &#125;;</span><br><span class="line">    <span class="built_in">document</span>.documentElement.appendChild(script);</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里，我们通过动态插入一个 script 标签实现对目标 script url 的加载，并通过将模块导出内容赋值给 window 对象。我们使用__tempModuleLoadingVariable” + Math.random().toString(32).substring(2) key保证模块导出对象的命名不会出现冲突</p>
+<p><strong>Webpack 赋能代码拆分和按需加载</strong></p>
+<p>总的来说，Webpack 提供了三种相关能力：</p>
+<ul>
+<li>通过入口配置分割代码</li>
+<li>动态导入支持</li>
+<li>通过 splitchunk 插件提取公共代码 (公共代码分割)</li>
+</ul>
+<p><strong>Webpack 对 dynamic import 能力支持</strong></p>
+<p>事实上，在 Webpack 早期版本中，提供了 require.ensure() 能力。请注意这是 Webpack 特有的实现：require.ensure() 能够将其参数对应的文件拆分到一个单独的 bundle 中，此 bundle 会被异步加载。</p>
+<p>目前 require.ensure() 已经被符合 ES 规范的 dynamic import 取代。调用 import()，被请求的模块和它引用的所有子模块，会分离到一个单独的 chunk 中。值得学习的是，Webpack 对于 import() 的支持和处理非常“巧妙”，我们知道 ES 中关于 dynamic import 的规范，只接受一个参数，表示模块的路径：</p>
+<p><code>import(</code>${path}<code>) -&gt; Promise</code></p>
+<p>但是 Webpack 是一个构建工具，Webpack 中对于 import() 的处理，可以通过注释接收一些特殊的参数，无须破坏 ES 对于 dynamic import 规定。比如：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span>(</span><br><span class="line">  <span class="comment">/* webpackChunkName: &quot;chunk-name&quot; */</span></span><br><span class="line">  <span class="comment">/* webpackMode: &quot;lazy&quot; */</span></span><br><span class="line">  <span class="string">&#x27;module&#x27;</span></span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/04/23/%E5%88%B6%E5%AE%9A%E4%B8%80%E4%B8%AA%E7%BB%9F%E4%B8%80%E6%A0%87%E5%87%86%E5%8C%96babel-preset/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Choo">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Choo'blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/04/23/%E5%88%B6%E5%AE%9A%E4%B8%80%E4%B8%AA%E7%BB%9F%E4%B8%80%E6%A0%87%E5%87%86%E5%8C%96babel-preset/" class="post-title-link" itemprop="url">制定一个统一标准化babel-preset</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-04-23 18:13:20 / 修改时间：18:13:47" itemprop="dateCreated datePublished" datetime="2021-04-23T18:13:20+08:00">2021-04-23</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>首先我们要认清应用项目构建和公共构建的差别。作为前端团队，我们构建了很多应用项目，对于一个项目来说，“只要能在需要兼容的环境中跑起来”就达到了基本目的。而对于一个公共库来说，我们的公共库可能被各种环境所引用或需要支持各种兼容需求，因此公共库就要兼容性能和易用性，要注重质量和广泛度。由此看来，公共库理论上构建机制就更加复杂</p>
+<h3 id="制定一个企业级公共库的设计原则"><a href="#制定一个企业级公共库的设计原则" class="headerlink" title="制定一个企业级公共库的设计原则"></a>制定一个企业级公共库的设计原则</h3><p>这里说的企业级公共库主要是指在企业内复用的公共库，它可以被发布到npm上进行社区共享。也可以在企业内的私有npm中限定范围地共享。总之，企业级公共库是需要在业务中被使用的。一个企业级公共库的设计原则应该包括一下几点。</p>
+<ul>
+<li>最快地搭建调试和开发环境</li>
+<li>安全地发版维护</li>
+<li>公共库文档建设完善</li>
+<li>公共库质量有保证</li>
+<li>接入和使用负担最小</li>
+</ul>
+<p>基于上述原则，在团队里，设计一个公共库前，你需要考虑：</p>
+<ul>
+<li>自研公共库还是使用社区已有轮子</li>
+<li>公共库的运行环境是什么，这将决定公共库的职责和边界</li>
+</ul>
+<p>上述内容并非纯理论原则，而是直接决定了公共库实现的技术选型。比如，为了实现更完善的文档建设，尤其是 UI 组件类文档，可以考虑部署静态组件展示站点，进行组件展示以及用法说明。更智能、工程化的内容，我们可以考虑使用类似 JSDoc 来实现 JavaScript API 文档生成，组件类公共库可以考虑 Storybook 或者 Styleguides 作为标准接入方案。</p>
+<p>再比如，我们的公共库适配环境是什么？一般来讲可能需要兼容：浏览器/Node.js/同构环境等。不同环境对应了不同的编译和打包标准，这就需要你进行思考：如果目标是浏览器环境，那么如何才能充分实现性能最优解？如帮助业务方实现 tree-shaking 等优化技术。</p>
+<p>同时，为了减轻业务使用负担，作为企业级公共库，以及对应使用这些企业级公共库的应用项目，可以指定标准规范的 babel-preset，保证编译产出的统一。这样一来，业务项目（即使用公共库方）可以以统一的接入标准引入。</p>
+<h3 id="制定一个统一标准的babel-preset"><a href="#制定一个统一标准的babel-preset" class="headerlink" title="制定一个统一标准的babel-preset"></a>制定一个统一标准的babel-preset</h3><p>企业中，所有公共库或应用项目都使用一套 @xxx/babel-xxx-preset</p>
+<p>这里给出一份设计方案，仅供参考</p>
+<ol>
+<li>支持NODE_ENV = ‘development’ | ‘production’ | ‘test’ 三种环境，并有对应的优化</li>
+<li>配置插件默认不开启 Babel loose: true 配置，让插件的行为尽可能地遵循规范，但对有较严重性能损耗或有兼容性问题的情况保留修改入口</li>
+<li>这份设计方案落地后产出，应该支持应用编译和公共库编译，即可以按照 @xxx/babel-preset/app，@xxx/babel-preset/dependencies，@xxx/babel-preset/library 进行区分使用</li>
+</ol>
+<p>@xxx/babel-preset/app，@xxx/babel-preset/dependencies 都可以作为编译应用项目的预设使用，但他们也有所差别，具体如下：</p>
+<ul>
+<li>@xxx/babel-preset/app 负责编译除node_modules外的业务代码</li>
+<li>@xxx/babel-preset/dependencies 编译node_modules 第三方代码</li>
+<li>对于企业级公共库，建议使用标准ES特性发布；对tree-shaking有强烈需求的库，应同时发布ES module格式代码</li>
+<li>对于应用编译，使用 @babel/preset-env 同时编译应用代码与第三方库代码。</li>
+<li>对于应用，需要对node_modules进行编译，并且为node_modules配置sourceType：’unambiguous’，以确保第三方依赖包中的commonJs模块能够被正确处理</li>
+<li>对于应用编译，启用plugin-transform-runtime，避免同样的helper代码被重复注入多个文件，以缩减打包后文件的体积。同时自动注入 regenerator-runtime，避免污染全局变量</li>
+<li>注入绝对路径用的 @babel/runtime包中对应的helper</li>
+</ul>
+<p>基于以上设计，对于CSR应用的Babel编译流程，预计业务方使用预设为</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// webpack.config.js</span></span><br><span class="line"><span class="built_in">module</span>.exports = &#123;</span><br><span class="line">  presets: [<span class="string">&#x27;@lucas/babel-preset/app&#x27;</span>],</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 相关 webpack 配置</span></span><br><span class="line"><span class="built_in">module</span>.exports = &#123;</span><br><span class="line">  <span class="built_in">module</span>: &#123;</span><br><span class="line">    rules: [</span><br><span class="line">      &#123;</span><br><span class="line">        test: <span class="regexp">/\.js$/</span>,</span><br><span class="line">        oneOf: [</span><br><span class="line">          &#123;</span><br><span class="line">            exclude: <span class="regexp">/node_modules/</span>,</span><br><span class="line">            loader: <span class="string">&#x27;babel-loader&#x27;</span>,</span><br><span class="line">            options: &#123;</span><br><span class="line">              cacheDirectory: <span class="literal">true</span>,</span><br><span class="line">            &#125;,</span><br><span class="line">          &#125;,</span><br><span class="line">          &#123;</span><br><span class="line">            loader: <span class="string">&#x27;babel-loader&#x27;</span>,</span><br><span class="line">            options: &#123;</span><br><span class="line">              cacheDirectory: <span class="literal">true</span>,</span><br><span class="line">              configFile: <span class="literal">false</span>,</span><br><span class="line">              <span class="comment">// 使用我们的 preset</span></span><br><span class="line">              presets: [<span class="string">&#x27;@lucas/babel-preset/dependencies&#x27;</span>],</span><br><span class="line">              compact: <span class="literal">false</span>,</span><br><span class="line">            &#125;,</span><br><span class="line">          &#125;,</span><br><span class="line">        ],</span><br><span class="line">      &#125;,</span><br><span class="line">    ],</span><br><span class="line">  &#125;,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p>同样按照node_modules进行了区分，对于node_modules第三方依赖，使用@xxx/babel-preset/dependencies预设，同时传入target参数。对于非node_modules的业务代码，使用@xxx/babel-preset/app这个预设，同时设定相应环境 target，@xxx/babel-preset/app内容为：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> path = <span class="built_in">require</span>(<span class="string">&#x27;path&#x27;</span>)</span><br><span class="line"><span class="keyword">const</span> &#123;declare&#125; = <span class="built_in">require</span>(<span class="string">&#x27;@babel/helper-plugin-utils&#x27;</span>)</span><br><span class="line"><span class="keyword">const</span> getAbsoluteRuntimePath = <span class="function">() =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> path.dirname(<span class="built_in">require</span>.resolve(<span class="string">&#x27;@babel/runtime/package.json&#x27;</span>))</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">module</span>.exports = (&#123;</span><br><span class="line">  targets,</span><br><span class="line">  ignoreBrowserslistConfig = <span class="literal">false</span>,</span><br><span class="line">  forceAllTransforms = <span class="literal">false</span>,</span><br><span class="line">  transformRuntime = <span class="literal">true</span>,</span><br><span class="line">  absoluteRuntime = <span class="literal">false</span>,</span><br><span class="line">  supportsDynamicImport = <span class="literal">false</span>,</span><br><span class="line">&#125; = &#123;&#125;) =&gt; &#123;</span><br><span class="line">  <span class="keyword">return</span> declare(</span><br><span class="line">    (</span><br><span class="line">      api,</span><br><span class="line">      &#123;</span><br><span class="line">        modules = <span class="string">&#x27;auto&#x27;</span>,</span><br><span class="line">        absoluteRuntimePath = getAbsoluteRuntimePath(),</span><br><span class="line">        react = <span class="literal">true</span>,</span><br><span class="line">        presetReactOptions = &#123;&#125;,</span><br><span class="line">      &#125;</span><br><span class="line">    ) =&gt; &#123;</span><br><span class="line">      api.assertVersion(<span class="number">7</span>)</span><br><span class="line">      <span class="keyword">return</span> &#123;</span><br><span class="line">        presets: [</span><br><span class="line">          [</span><br><span class="line">            <span class="built_in">require</span>(<span class="string">&#x27;@babel/preset-env&#x27;</span>).default,</span><br><span class="line">            &#123;</span><br><span class="line">              useBuiltIns: <span class="literal">false</span>,</span><br><span class="line">              modules,</span><br><span class="line">              targets,</span><br><span class="line">              ignoreBrowserslistConfig,</span><br><span class="line">              forceAllTransforms,</span><br><span class="line">              exclude: [<span class="string">&#x27;transform-typeof-symbol&#x27;</span>],</span><br><span class="line">            &#125;,</span><br><span class="line">          ],</span><br><span class="line">          react &amp;&amp; [</span><br><span class="line">            <span class="built_in">require</span>(<span class="string">&#x27;@babel/preset-react&#x27;</span>).default,</span><br><span class="line">            &#123;<span class="attr">useBuiltIns</span>: <span class="literal">true</span>, <span class="attr">runtime</span>: <span class="string">&#x27;automatic&#x27;</span>, ...presetReactOptions&#125;,</span><br><span class="line">          ],</span><br><span class="line">        ].filter(<span class="built_in">Boolean</span>),</span><br><span class="line">        plugins: [</span><br><span class="line">          transformRuntime &amp;&amp; [</span><br><span class="line">            <span class="built_in">require</span>(<span class="string">&#x27;@babel/plugin-transform-runtime&#x27;</span>).default,</span><br><span class="line">            &#123;</span><br><span class="line">              useESModules: <span class="string">&#x27;auto&#x27;</span>,</span><br><span class="line">              absoluteRuntime: absoluteRuntime ? absoluteRuntimePath : <span class="literal">false</span>,</span><br><span class="line">            &#125;,</span><br><span class="line">          ],</span><br><span class="line">          <span class="comment">// https://github.com/facebook/create-react-app/issues/4263</span></span><br><span class="line">          [</span><br><span class="line">            <span class="built_in">require</span>(<span class="string">&#x27;@babel/plugin-proposal-class-properties&#x27;</span>).default,</span><br><span class="line">            &#123;<span class="attr">loose</span>: <span class="literal">true</span>&#125;,</span><br><span class="line">          ],</span><br><span class="line">          <span class="built_in">require</span>(<span class="string">&#x27;@babel/plugin-syntax-dynamic-import&#x27;</span>).default,</span><br><span class="line">          !supportsDynamicImport &amp;&amp;</span><br><span class="line">            !api.caller(<span class="function"><span class="params">caller</span> =&gt;</span> caller &amp;&amp; caller.supportsDynamicImport) &amp;&amp;</span><br><span class="line">            <span class="built_in">require</span>(<span class="string">&#x27;babel-plugin-dynamic-import-node&#x27;</span>),</span><br><span class="line">          [</span><br><span class="line">            <span class="built_in">require</span>(<span class="string">&#x27;@babel/plugin-proposal-object-rest-spread&#x27;</span>).default,</span><br><span class="line">            &#123;<span class="attr">loose</span>: <span class="literal">true</span>, <span class="attr">useBuiltIns</span>: <span class="literal">true</span>&#125;,</span><br><span class="line">          ],</span><br><span class="line">          <span class="built_in">require</span>(<span class="string">&#x27;@babel/plugin-proposal-nullish-coalescing-operator&#x27;</span>).default,</span><br><span class="line">          <span class="built_in">require</span>(<span class="string">&#x27;@babel/plugin-proposal-optional-chaining&#x27;</span>).default,</span><br><span class="line">        ].filter(<span class="built_in">Boolean</span>),</span><br><span class="line">        env: &#123;</span><br><span class="line">          development: &#123;</span><br><span class="line">            presets: [</span><br><span class="line">              react &amp;&amp; [</span><br><span class="line">                <span class="built_in">require</span>(<span class="string">&#x27;@babel/preset-react&#x27;</span>).default,</span><br><span class="line">                &#123;</span><br><span class="line">                  useBuiltIns: <span class="literal">true</span>,</span><br><span class="line">                  development: <span class="literal">true</span>,</span><br><span class="line">                  runtime: <span class="string">&#x27;automatic&#x27;</span>,</span><br><span class="line">                  ...presetReactOptions,</span><br><span class="line">                &#125;,</span><br><span class="line">              ],</span><br><span class="line">            ].filter(<span class="built_in">Boolean</span>),</span><br><span class="line">          &#125;,</span><br><span class="line">          test: &#123;</span><br><span class="line">            presets: [</span><br><span class="line">              [</span><br><span class="line">                <span class="built_in">require</span>(<span class="string">&#x27;@babel/preset-env&#x27;</span>).default,</span><br><span class="line">                &#123;</span><br><span class="line">                  useBuiltIns: <span class="literal">false</span>,</span><br><span class="line">                  targets: &#123;<span class="attr">node</span>: <span class="string">&#x27;current&#x27;</span>&#125;,</span><br><span class="line">                  ignoreBrowserslistConfig: <span class="literal">true</span>,</span><br><span class="line">                  exclude: [<span class="string">&#x27;transform-typeof-symbol&#x27;</span>],</span><br><span class="line">                &#125;,</span><br><span class="line">              ],</span><br><span class="line">              react &amp;&amp; [</span><br><span class="line">                <span class="built_in">require</span>(<span class="string">&#x27;@babel/preset-react&#x27;</span>).default,</span><br><span class="line">                &#123;</span><br><span class="line">                  useBuiltIns: <span class="literal">true</span>,</span><br><span class="line">                  development: <span class="literal">true</span>,</span><br><span class="line">                  runtime: <span class="string">&#x27;automatic&#x27;</span>,</span><br><span class="line">                  ...presetReactOptions,</span><br><span class="line">                &#125;,</span><br><span class="line">              ],</span><br><span class="line">            ].filter(<span class="built_in">Boolean</span>),</span><br><span class="line">            plugins: [</span><br><span class="line">              [</span><br><span class="line">                <span class="built_in">require</span>(<span class="string">&#x27;@babel/plugin-transform-runtime&#x27;</span>).default,</span><br><span class="line">                &#123;</span><br><span class="line">                  useESModules: <span class="string">&#x27;auto&#x27;</span>,</span><br><span class="line">                  absoluteRuntime: absoluteRuntimePath,</span><br><span class="line">                &#125;,</span><br><span class="line">              ],</span><br><span class="line">              <span class="built_in">require</span>(<span class="string">&#x27;babel-plugin-dynamic-import-node&#x27;</span>),</span><br><span class="line">            ],</span><br><span class="line">          &#125;,</span><br><span class="line">        &#125;,</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">  )</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
       
     </div>
@@ -303,6 +1229,9 @@
 
 
   
+  <nav class="pagination">
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
+  </nav>
 
 
 
@@ -367,7 +1296,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">2</span>
+          <span class="site-state-item-count">13</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>

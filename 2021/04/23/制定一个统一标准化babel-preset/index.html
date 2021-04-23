@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="首先我们要认清应用项目构建和公共构建的差别。作为前端团队，我们构建了很多应用项目，对于一个项目来说，“只要能在需要兼容的环境中跑起来”就达到了基本目的。而对于一个公共库来说，我们的公共库可能被各种环境所引用或需要支持各种兼容需求，因此公共库就要兼容性能和易用性，要注重质量和广泛度。由此看来，公共库理论上构建机制就更加复杂 制定一个企业级公共库的设计原则这里说的企业级公共库主要是指在企业内复用的公共">
+<meta property="og:type" content="article">
+<meta property="og:title" content="制定一个统一标准化babel-preset">
+<meta property="og:url" content="http://example.com/2021/04/23/%E5%88%B6%E5%AE%9A%E4%B8%80%E4%B8%AA%E7%BB%9F%E4%B8%80%E6%A0%87%E5%87%86%E5%8C%96babel-preset/index.html">
+<meta property="og:site_name" content="Choo&#39;blog">
+<meta property="og:description" content="首先我们要认清应用项目构建和公共构建的差别。作为前端团队，我们构建了很多应用项目，对于一个项目来说，“只要能在需要兼容的环境中跑起来”就达到了基本目的。而对于一个公共库来说，我们的公共库可能被各种环境所引用或需要支持各种兼容需求，因此公共库就要兼容性能和易用性，要注重质量和广泛度。由此看来，公共库理论上构建机制就更加复杂 制定一个企业级公共库的设计原则这里说的企业级公共库主要是指在企业内复用的公共">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-04-23T10:13:20.000Z">
+<meta property="article:modified_time" content="2021-04-23T10:13:47.724Z">
+<meta property="article:author" content="Choo">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2021/04/23/%E5%88%B6%E5%AE%9A%E4%B8%80%E4%B8%AA%E7%BB%9F%E4%B8%80%E6%A0%87%E5%87%86%E5%8C%96babel-preset/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>制定一个统一标准化babel-preset | Choo'blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Choo'blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/04/23/%E5%88%B6%E5%AE%9A%E4%B8%80%E4%B8%AA%E7%BB%9F%E4%B8%80%E6%A0%87%E5%87%86%E5%8C%96babel-preset/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Choo">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Choo'blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          制定一个统一标准化babel-preset
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-04-23 18:13:20 / 修改时间：18:13:47" itemprop="dateCreated datePublished" datetime="2021-04-23T18:13:20+08:00">2021-04-23</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>首先我们要认清应用项目构建和公共构建的差别。作为前端团队，我们构建了很多应用项目，对于一个项目来说，“只要能在需要兼容的环境中跑起来”就达到了基本目的。而对于一个公共库来说，我们的公共库可能被各种环境所引用或需要支持各种兼容需求，因此公共库就要兼容性能和易用性，要注重质量和广泛度。由此看来，公共库理论上构建机制就更加复杂</p>
+<h3 id="制定一个企业级公共库的设计原则"><a href="#制定一个企业级公共库的设计原则" class="headerlink" title="制定一个企业级公共库的设计原则"></a>制定一个企业级公共库的设计原则</h3><p>这里说的企业级公共库主要是指在企业内复用的公共库，它可以被发布到npm上进行社区共享。也可以在企业内的私有npm中限定范围地共享。总之，企业级公共库是需要在业务中被使用的。一个企业级公共库的设计原则应该包括一下几点。</p>
+<ul>
+<li>最快地搭建调试和开发环境</li>
+<li>安全地发版维护</li>
+<li>公共库文档建设完善</li>
+<li>公共库质量有保证</li>
+<li>接入和使用负担最小</li>
+</ul>
+<p>基于上述原则，在团队里，设计一个公共库前，你需要考虑：</p>
+<ul>
+<li>自研公共库还是使用社区已有轮子</li>
+<li>公共库的运行环境是什么，这将决定公共库的职责和边界</li>
+</ul>
+<p>上述内容并非纯理论原则，而是直接决定了公共库实现的技术选型。比如，为了实现更完善的文档建设，尤其是 UI 组件类文档，可以考虑部署静态组件展示站点，进行组件展示以及用法说明。更智能、工程化的内容，我们可以考虑使用类似 JSDoc 来实现 JavaScript API 文档生成，组件类公共库可以考虑 Storybook 或者 Styleguides 作为标准接入方案。</p>
+<p>再比如，我们的公共库适配环境是什么？一般来讲可能需要兼容：浏览器/Node.js/同构环境等。不同环境对应了不同的编译和打包标准，这就需要你进行思考：如果目标是浏览器环境，那么如何才能充分实现性能最优解？如帮助业务方实现 tree-shaking 等优化技术。</p>
+<p>同时，为了减轻业务使用负担，作为企业级公共库，以及对应使用这些企业级公共库的应用项目，可以指定标准规范的 babel-preset，保证编译产出的统一。这样一来，业务项目（即使用公共库方）可以以统一的接入标准引入。</p>
+<h3 id="制定一个统一标准的babel-preset"><a href="#制定一个统一标准的babel-preset" class="headerlink" title="制定一个统一标准的babel-preset"></a>制定一个统一标准的babel-preset</h3><p>企业中，所有公共库或应用项目都使用一套 @xxx/babel-xxx-preset</p>
+<p>这里给出一份设计方案，仅供参考</p>
+<ol>
+<li>支持NODE_ENV = ‘development’ | ‘production’ | ‘test’ 三种环境，并有对应的优化</li>
+<li>配置插件默认不开启 Babel loose: true 配置，让插件的行为尽可能地遵循规范，但对有较严重性能损耗或有兼容性问题的情况保留修改入口</li>
+<li>这份设计方案落地后产出，应该支持应用编译和公共库编译，即可以按照 @xxx/babel-preset/app，@xxx/babel-preset/dependencies，@xxx/babel-preset/library 进行区分使用</li>
+</ol>
+<p>@xxx/babel-preset/app，@xxx/babel-preset/dependencies 都可以作为编译应用项目的预设使用，但他们也有所差别，具体如下：</p>
+<ul>
+<li>@xxx/babel-preset/app 负责编译除node_modules外的业务代码</li>
+<li>@xxx/babel-preset/dependencies 编译node_modules 第三方代码</li>
+<li>对于企业级公共库，建议使用标准ES特性发布；对tree-shaking有强烈需求的库，应同时发布ES module格式代码</li>
+<li>对于应用编译，使用 @babel/preset-env 同时编译应用代码与第三方库代码。</li>
+<li>对于应用，需要对node_modules进行编译，并且为node_modules配置sourceType：’unambiguous’，以确保第三方依赖包中的commonJs模块能够被正确处理</li>
+<li>对于应用编译，启用plugin-transform-runtime，避免同样的helper代码被重复注入多个文件，以缩减打包后文件的体积。同时自动注入 regenerator-runtime，避免污染全局变量</li>
+<li>注入绝对路径用的 @babel/runtime包中对应的helper</li>
+</ul>
+<p>基于以上设计，对于CSR应用的Babel编译流程，预计业务方使用预设为</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// webpack.config.js</span></span><br><span class="line"><span class="built_in">module</span>.exports = &#123;</span><br><span class="line">  presets: [<span class="string">&#x27;@lucas/babel-preset/app&#x27;</span>],</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 相关 webpack 配置</span></span><br><span class="line"><span class="built_in">module</span>.exports = &#123;</span><br><span class="line">  <span class="built_in">module</span>: &#123;</span><br><span class="line">    rules: [</span><br><span class="line">      &#123;</span><br><span class="line">        test: <span class="regexp">/\.js$/</span>,</span><br><span class="line">        oneOf: [</span><br><span class="line">          &#123;</span><br><span class="line">            exclude: <span class="regexp">/node_modules/</span>,</span><br><span class="line">            loader: <span class="string">&#x27;babel-loader&#x27;</span>,</span><br><span class="line">            options: &#123;</span><br><span class="line">              cacheDirectory: <span class="literal">true</span>,</span><br><span class="line">            &#125;,</span><br><span class="line">          &#125;,</span><br><span class="line">          &#123;</span><br><span class="line">            loader: <span class="string">&#x27;babel-loader&#x27;</span>,</span><br><span class="line">            options: &#123;</span><br><span class="line">              cacheDirectory: <span class="literal">true</span>,</span><br><span class="line">              configFile: <span class="literal">false</span>,</span><br><span class="line">              <span class="comment">// 使用我们的 preset</span></span><br><span class="line">              presets: [<span class="string">&#x27;@lucas/babel-preset/dependencies&#x27;</span>],</span><br><span class="line">              compact: <span class="literal">false</span>,</span><br><span class="line">            &#125;,</span><br><span class="line">          &#125;,</span><br><span class="line">        ],</span><br><span class="line">      &#125;,</span><br><span class="line">    ],</span><br><span class="line">  &#125;,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p>同样按照node_modules进行了区分，对于node_modules第三方依赖，使用@xxx/babel-preset/dependencies预设，同时传入target参数。对于非node_modules的业务代码，使用@xxx/babel-preset/app这个预设，同时设定相应环境 target，@xxx/babel-preset/app内容为：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> path = <span class="built_in">require</span>(<span class="string">&#x27;path&#x27;</span>)</span><br><span class="line"><span class="keyword">const</span> &#123;declare&#125; = <span class="built_in">require</span>(<span class="string">&#x27;@babel/helper-plugin-utils&#x27;</span>)</span><br><span class="line"><span class="keyword">const</span> getAbsoluteRuntimePath = <span class="function">() =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> path.dirname(<span class="built_in">require</span>.resolve(<span class="string">&#x27;@babel/runtime/package.json&#x27;</span>))</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">module</span>.exports = (&#123;</span><br><span class="line">  targets,</span><br><span class="line">  ignoreBrowserslistConfig = <span class="literal">false</span>,</span><br><span class="line">  forceAllTransforms = <span class="literal">false</span>,</span><br><span class="line">  transformRuntime = <span class="literal">true</span>,</span><br><span class="line">  absoluteRuntime = <span class="literal">false</span>,</span><br><span class="line">  supportsDynamicImport = <span class="literal">false</span>,</span><br><span class="line">&#125; = &#123;&#125;) =&gt; &#123;</span><br><span class="line">  <span class="keyword">return</span> declare(</span><br><span class="line">    (</span><br><span class="line">      api,</span><br><span class="line">      &#123;</span><br><span class="line">        modules = <span class="string">&#x27;auto&#x27;</span>,</span><br><span class="line">        absoluteRuntimePath = getAbsoluteRuntimePath(),</span><br><span class="line">        react = <span class="literal">true</span>,</span><br><span class="line">        presetReactOptions = &#123;&#125;,</span><br><span class="line">      &#125;</span><br><span class="line">    ) =&gt; &#123;</span><br><span class="line">      api.assertVersion(<span class="number">7</span>)</span><br><span class="line">      <span class="keyword">return</span> &#123;</span><br><span class="line">        presets: [</span><br><span class="line">          [</span><br><span class="line">            <span class="built_in">require</span>(<span class="string">&#x27;@babel/preset-env&#x27;</span>).default,</span><br><span class="line">            &#123;</span><br><span class="line">              useBuiltIns: <span class="literal">false</span>,</span><br><span class="line">              modules,</span><br><span class="line">              targets,</span><br><span class="line">              ignoreBrowserslistConfig,</span><br><span class="line">              forceAllTransforms,</span><br><span class="line">              exclude: [<span class="string">&#x27;transform-typeof-symbol&#x27;</span>],</span><br><span class="line">            &#125;,</span><br><span class="line">          ],</span><br><span class="line">          react &amp;&amp; [</span><br><span class="line">            <span class="built_in">require</span>(<span class="string">&#x27;@babel/preset-react&#x27;</span>).default,</span><br><span class="line">            &#123;<span class="attr">useBuiltIns</span>: <span class="literal">true</span>, <span class="attr">runtime</span>: <span class="string">&#x27;automatic&#x27;</span>, ...presetReactOptions&#125;,</span><br><span class="line">          ],</span><br><span class="line">        ].filter(<span class="built_in">Boolean</span>),</span><br><span class="line">        plugins: [</span><br><span class="line">          transformRuntime &amp;&amp; [</span><br><span class="line">            <span class="built_in">require</span>(<span class="string">&#x27;@babel/plugin-transform-runtime&#x27;</span>).default,</span><br><span class="line">            &#123;</span><br><span class="line">              useESModules: <span class="string">&#x27;auto&#x27;</span>,</span><br><span class="line">              absoluteRuntime: absoluteRuntime ? absoluteRuntimePath : <span class="literal">false</span>,</span><br><span class="line">            &#125;,</span><br><span class="line">          ],</span><br><span class="line">          <span class="comment">// https://github.com/facebook/create-react-app/issues/4263</span></span><br><span class="line">          [</span><br><span class="line">            <span class="built_in">require</span>(<span class="string">&#x27;@babel/plugin-proposal-class-properties&#x27;</span>).default,</span><br><span class="line">            &#123;<span class="attr">loose</span>: <span class="literal">true</span>&#125;,</span><br><span class="line">          ],</span><br><span class="line">          <span class="built_in">require</span>(<span class="string">&#x27;@babel/plugin-syntax-dynamic-import&#x27;</span>).default,</span><br><span class="line">          !supportsDynamicImport &amp;&amp;</span><br><span class="line">            !api.caller(<span class="function"><span class="params">caller</span> =&gt;</span> caller &amp;&amp; caller.supportsDynamicImport) &amp;&amp;</span><br><span class="line">            <span class="built_in">require</span>(<span class="string">&#x27;babel-plugin-dynamic-import-node&#x27;</span>),</span><br><span class="line">          [</span><br><span class="line">            <span class="built_in">require</span>(<span class="string">&#x27;@babel/plugin-proposal-object-rest-spread&#x27;</span>).default,</span><br><span class="line">            &#123;<span class="attr">loose</span>: <span class="literal">true</span>, <span class="attr">useBuiltIns</span>: <span class="literal">true</span>&#125;,</span><br><span class="line">          ],</span><br><span class="line">          <span class="built_in">require</span>(<span class="string">&#x27;@babel/plugin-proposal-nullish-coalescing-operator&#x27;</span>).default,</span><br><span class="line">          <span class="built_in">require</span>(<span class="string">&#x27;@babel/plugin-proposal-optional-chaining&#x27;</span>).default,</span><br><span class="line">        ].filter(<span class="built_in">Boolean</span>),</span><br><span class="line">        env: &#123;</span><br><span class="line">          development: &#123;</span><br><span class="line">            presets: [</span><br><span class="line">              react &amp;&amp; [</span><br><span class="line">                <span class="built_in">require</span>(<span class="string">&#x27;@babel/preset-react&#x27;</span>).default,</span><br><span class="line">                &#123;</span><br><span class="line">                  useBuiltIns: <span class="literal">true</span>,</span><br><span class="line">                  development: <span class="literal">true</span>,</span><br><span class="line">                  runtime: <span class="string">&#x27;automatic&#x27;</span>,</span><br><span class="line">                  ...presetReactOptions,</span><br><span class="line">                &#125;,</span><br><span class="line">              ],</span><br><span class="line">            ].filter(<span class="built_in">Boolean</span>),</span><br><span class="line">          &#125;,</span><br><span class="line">          test: &#123;</span><br><span class="line">            presets: [</span><br><span class="line">              [</span><br><span class="line">                <span class="built_in">require</span>(<span class="string">&#x27;@babel/preset-env&#x27;</span>).default,</span><br><span class="line">                &#123;</span><br><span class="line">                  useBuiltIns: <span class="literal">false</span>,</span><br><span class="line">                  targets: &#123;<span class="attr">node</span>: <span class="string">&#x27;current&#x27;</span>&#125;,</span><br><span class="line">                  ignoreBrowserslistConfig: <span class="literal">true</span>,</span><br><span class="line">                  exclude: [<span class="string">&#x27;transform-typeof-symbol&#x27;</span>],</span><br><span class="line">                &#125;,</span><br><span class="line">              ],</span><br><span class="line">              react &amp;&amp; [</span><br><span class="line">                <span class="built_in">require</span>(<span class="string">&#x27;@babel/preset-react&#x27;</span>).default,</span><br><span class="line">                &#123;</span><br><span class="line">                  useBuiltIns: <span class="literal">true</span>,</span><br><span class="line">                  development: <span class="literal">true</span>,</span><br><span class="line">                  runtime: <span class="string">&#x27;automatic&#x27;</span>,</span><br><span class="line">                  ...presetReactOptions,</span><br><span class="line">                &#125;,</span><br><span class="line">              ],</span><br><span class="line">            ].filter(<span class="built_in">Boolean</span>),</span><br><span class="line">            plugins: [</span><br><span class="line">              [</span><br><span class="line">                <span class="built_in">require</span>(<span class="string">&#x27;@babel/plugin-transform-runtime&#x27;</span>).default,</span><br><span class="line">                &#123;</span><br><span class="line">                  useESModules: <span class="string">&#x27;auto&#x27;</span>,</span><br><span class="line">                  absoluteRuntime: absoluteRuntimePath,</span><br><span class="line">                &#125;,</span><br><span class="line">              ],</span><br><span class="line">              <span class="built_in">require</span>(<span class="string">&#x27;babel-plugin-dynamic-import-node&#x27;</span>),</span><br><span class="line">            ],</span><br><span class="line">          &#125;,</span><br><span class="line">        &#125;,</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">  )</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/04/23/core-js%E5%8F%8A%E5%9E%AB%E7%89%87%E7%90%86%E5%BF%B5/" rel="prev" title="core-js及垫片理念">
+      <i class="fa fa-chevron-left"></i> core-js及垫片理念
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/04/23/%E4%BB%A3%E7%A0%81%E6%8B%86%E5%88%86%E5%92%8C%E6%8C%89%E9%9C%80%E5%8A%A0%E8%BD%BD/" rel="next" title="代码拆分和按需加载">
+      代码拆分和按需加载 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%B6%E5%AE%9A%E4%B8%80%E4%B8%AA%E4%BC%81%E4%B8%9A%E7%BA%A7%E5%85%AC%E5%85%B1%E5%BA%93%E7%9A%84%E8%AE%BE%E8%AE%A1%E5%8E%9F%E5%88%99"><span class="nav-number">1.</span> <span class="nav-text">制定一个企业级公共库的设计原则</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%B6%E5%AE%9A%E4%B8%80%E4%B8%AA%E7%BB%9F%E4%B8%80%E6%A0%87%E5%87%86%E7%9A%84babel-preset"><span class="nav-number">2.</span> <span class="nav-text">制定一个统一标准的babel-preset</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Choo</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">13</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Choo</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

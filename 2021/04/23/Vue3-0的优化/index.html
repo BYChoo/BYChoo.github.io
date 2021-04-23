@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="源码优化码的优化主要体现在使用 monorepo 和 TypeScript 管理和开发源码，这样做的目标是提升自身代码可维护性。 1. 更好的代码管理方式：monorepo首先，源码的优化体现在代码管理方式上。Vue2.x的源码托管在src目录，然后依据功能拆分出了compiler(模版编译的相关代码)、core(与平台无关的通用运行时代码)、platforms(平台专有代码)、sfc(.vue单">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Vue3.0的优化">
+<meta property="og:url" content="http://example.com/2021/04/23/Vue3-0%E7%9A%84%E4%BC%98%E5%8C%96/index.html">
+<meta property="og:site_name" content="Choo&#39;blog">
+<meta property="og:description" content="源码优化码的优化主要体现在使用 monorepo 和 TypeScript 管理和开发源码，这样做的目标是提升自身代码可维护性。 1. 更好的代码管理方式：monorepo首先，源码的优化体现在代码管理方式上。Vue2.x的源码托管在src目录，然后依据功能拆分出了compiler(模版编译的相关代码)、core(与平台无关的通用运行时代码)、platforms(平台专有代码)、sfc(.vue单">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/259122/1616574367425-f8002c3a-a103-4d47-a9e7-f0d50673f4e2.png">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/259122/1616574492486-577b2ba6-51cf-4765-bcca-aad57864a5e7.png">
+<meta property="article:published_time" content="2021-04-23T10:17:26.000Z">
+<meta property="article:modified_time" content="2021-04-23T10:17:42.868Z">
+<meta property="article:author" content="Choo">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.nlark.com/yuque/0/2021/png/259122/1616574367425-f8002c3a-a103-4d47-a9e7-f0d50673f4e2.png">
+
+<link rel="canonical" href="http://example.com/2021/04/23/Vue3-0%E7%9A%84%E4%BC%98%E5%8C%96/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Vue3.0的优化 | Choo'blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Choo'blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/04/23/Vue3-0%E7%9A%84%E4%BC%98%E5%8C%96/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Choo">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Choo'blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Vue3.0的优化
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-04-23 18:17:26 / 修改时间：18:17:42" itemprop="dateCreated datePublished" datetime="2021-04-23T18:17:26+08:00">2021-04-23</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="源码优化"><a href="#源码优化" class="headerlink" title="源码优化"></a>源码优化</h3><p>码的优化主要体现在使用 monorepo 和 TypeScript 管理和开发源码，这样做的目标是提升自身代码可维护性。</p>
+<h4 id="1-更好的代码管理方式：monorepo"><a href="#1-更好的代码管理方式：monorepo" class="headerlink" title="1. 更好的代码管理方式：monorepo"></a>1. 更好的代码管理方式：monorepo</h4><p>首先，源码的优化体现在代码管理方式上。Vue2.x的源码托管在src目录，然后依据功能拆分出了compiler(模版编译的相关代码)、core(与平台无关的通用运行时代码)、platforms(平台专有代码)、sfc(.vue单文件解析相关代码)、shared(共享工具代码)等目录</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2021/png/259122/1616574367425-f8002c3a-a103-4d47-a9e7-f0d50673f4e2.png"></p>
+<p>而到了 Vue.js 3.0，整个源码是通过monorepo的方式维护的，根据功能将不同的模块拆分到packages目录下面不同的子目录中：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2021/png/259122/1616574492486-577b2ba6-51cf-4765-bcca-aad57864a5e7.png"></p>
+<p>可以看出相对于2.x的源码管理方式，monorepo把这些模块拆分到不同的package中，每个package有格子的API、类型定义和测试。这样使得模块拆分更细化，职责划分更明确，模块之间的依赖关系也更加明确，开发人员也更容易阅读、理解和更改所有模块源码，提高代码的可维护性。</p>
+<p>另外一些 package（比如 reactivity 响应式库）是可以独立于 Vue.js 使用的，这样用户如果只想使用 Vue.js 3.0 的响应式能力，可以单独依赖这个响应式库而不用去依赖整个 Vue.js，减小了引用包的体积大小，而 Vue.js 2 .x 是做不到这一点的。</p>
+<h4 id="有类型的javascript：TypeScript"><a href="#有类型的javascript：TypeScript" class="headerlink" title="有类型的javascript：TypeScript"></a>有类型的javascript：TypeScript</h4><p>其次，源码的优化还体现在 Vue.js 3.0 自身采用了 TypeScript 开发。Vue.js 1.x 版本的源码是没有用类型语言的，小右用 JavaScript 开发了整个框架，但对于复杂的框架项目开发，使用类型语言非常有利于代码的维护，因为它可以在编码期间帮你做类型检查，避免一些因类型问题导致的错误；也可以利于它去定义接口的类型，利于 IDE 对变量类型的推导。</p>
+<h3 id="性能优化"><a href="#性能优化" class="headerlink" title="性能优化"></a>性能优化</h3><p>性能优化一直是前端老生常谈的问题。那么对于 Vue.js 2.x 已经足够优秀的前端框架，它的性能优化可以从哪些方面进行突破呢？</p>
+<h4 id="1-源码体积优化"><a href="#1-源码体积优化" class="headerlink" title="1. 源码体积优化"></a>1. 源码体积优化</h4><p>首先是源码体积优化，我们在平时工作中也经常会尝试优化静态资源的体积，因为 JavaScript 包体积越小，意味着网络传输时间越短，JavaScript 引擎解析包的速度也越快。</p>
+<p>那么，Vue.js 3.0 在源码体积的减少方面做了哪些工作呢？</p>
+<ul>
+<li>首先，移除一些冷门的 feature（比如 filter、inline-template 等）；</li>
+<li>其次，引入 tree-shaking 的技术，减少打包体积。</li>
+</ul>
+<p>tree-shaking 依赖 ES2015 模块语法的静态结构（即 import 和 export），通过编译阶段的静态分析，找到没有引入的模块并打上标记。</p>
+<p>举个例子，一个 math 模块定义了 2 个方法 square(x) 和 cube(x) ：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="function"><span class="keyword">function</span> <span class="title">square</span>(<span class="params">x</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> x * x</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">export</span> <span class="function"><span class="keyword">function</span> <span class="title">cube</span>(<span class="params">x</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> x * x * x</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们在这个模块外面只引入了 cube 方法：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; cube &#125; <span class="keyword">from</span> <span class="string">&#x27;./math.js&#x27;</span></span><br><span class="line"><span class="comment">// do something with cube</span></span><br></pre></td></tr></table></figure>
+
+<p>最终 math 模块会被 webpack 打包生成如下代码：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* 1 */</span></span><br><span class="line"><span class="comment">/***/</span> (<span class="function"><span class="keyword">function</span>(<span class="params"><span class="built_in">module</span>, __webpack_exports__, __webpack_require__</span>) </span>&#123;</span><br><span class="line"><span class="meta">  &#x27;use strict&#x27;</span>;</span><br><span class="line">  <span class="comment">/* unused harmony export square */</span></span><br><span class="line">  <span class="comment">/* harmony export (immutable) */</span> __webpack_exports__[<span class="string">&#x27;a&#x27;</span>] = cube;</span><br><span class="line">  <span class="function"><span class="keyword">function</span> <span class="title">square</span>(<span class="params">x</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> x * x;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="function"><span class="keyword">function</span> <span class="title">cube</span>(<span class="params">x</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> x * x * x;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，未被引入的 square 模块被标记了， 然后压缩阶段会利用例如 uglify-js、terser 等压缩工具真正地删除这些没有用到的代码。</p>
+<p>也就是说，利用 tree-shaking 技术，如果你在项目中没有引入 Transition、KeepAlive 等组件，那么它们对应的代码就不会打包，这样也就间接达到了减少项目引入的 Vue.js 包体积的目的。</p>
+<h3 id="2-数据劫持优化"><a href="#2-数据劫持优化" class="headerlink" title="2.数据劫持优化"></a>2.数据劫持优化</h3><p>其次是数据劫持优化。Vue.js区别于React的一大特色是它的数据是响应式的，这个特性从Vue.js 1.x版本就一直伴随着。DOM是数据的一种映射，数据发生变化可以自动更新DOM</p>
+<p>在vue内部，想实现这个功能是要付出一定代价的，那就是必须劫持数据的访问和更新。其实这点很好理解，当数据改变后，为了自动更新dom，那么就必须劫持数据的更新，也就是说当数据发生改变后能自动执行一些代码去更新DOM，那么问题来了，Vue怎么知道更新那一片dom？因为在渲染dom的时候访问了数据，我们可以对它进行访问劫持，这样就在内部建立了依赖关系，也就知道对应的dom是什么了。</p>
+<p>Vue.js 1.x 和 Vue.js 2.x 内部都是通过 Object.defineProperty 这个 API 去劫持数据的 getter 和 setter，具体是这样的：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">Object</span>.defineProperty(data, <span class="string">&#x27;a&#x27;</span>,&#123;</span><br><span class="line">  <span class="function"><span class="title">get</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="comment">// track</span></span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="function"><span class="title">set</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="comment">// trigger</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+<p>但这个API有一些缺陷，它必须预先知道要拦截的key是什么，所以它并不能检测对象属性的添加和删除。尽管vue为了解决这个问题提供了$set和$delete实例方法，但是对于用户来说，还是增加了一定的心智负担</p>
+<p>另外Object.defineProperty 的方式还有一个问题，举个例子，比如这个嵌套层级比较深的对象：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> &#123;</span><br><span class="line">  data: &#123;</span><br><span class="line">    a: &#123;</span><br><span class="line">      b: &#123;</span><br><span class="line">        c: &#123;</span><br><span class="line">          d: <span class="number">1</span></span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>由于 Vue.js 无法判断你在运行时到底会访问到哪个属性，所以对于这样一个嵌套层级较深的对象，如果要劫持它内部深层次的对象变化，就需要递归遍历这个对象，执行 Object.defineProperty 把每一层对象数据都变成响应式的。毫无疑问，如果我们定义的响应式数据过于复杂，这就会有相当大的性能负担。</p>
+<p>为了解决上述 2 个问题，Vue.js 3.0 使用了 Proxy API 做数据劫持，它的内部是这样的：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">observed = <span class="keyword">new</span> <span class="built_in">Proxy</span>(data, &#123;</span><br><span class="line">  <span class="function"><span class="title">get</span>(<span class="params"></span>)</span> &#123;</span><br><span class="line">    <span class="comment">// track</span></span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="function"><span class="title">set</span>(<span class="params"></span>)</span> &#123;</span><br><span class="line">    <span class="comment">// trigger</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+<p>由于它劫持的是整个对象，那么自然对于对象的属性的增加和删除都能检测到。</p>
+<p>但要注意的是，Proxy API 并不能监听到内部深层次的对象变化，因此 Vue.js 3.0 的处理方式是在 getter 中去递归响应式，这样的好处是真正访问到的内部对象才会变成响应式，而不是无脑递归，这样无疑也在很大程度上提升了性能，我会在后面分析响应式章节详细介绍它的具体实现原理。</p>
+<h3 id="语法-API-优化：Composition-API"><a href="#语法-API-优化：Composition-API" class="headerlink" title="语法 API 优化：Composition API"></a>语法 API 优化：Composition API</h3><p>除了源码和性能方面，Vue.js 3.0 还在语法方面进行了优化，主要是提供了 Composition API</p>
+<h4 id="1-优化逻辑组织"><a href="#1-优化逻辑组织" class="headerlink" title="1.优化逻辑组织"></a>1.优化逻辑组织</h4><p>首先，是优化逻辑组织</p>
+<p>在 Vue.js 1.x 和 2.x 版本中，编写组件本质就是在编写一个“包含了描述组件选项的对象”，我们把它称为 Options API，它的好处是在于写法非常符合直觉思维，对于新手来说这样很容易理解，这也是很多人喜欢 Vue.js 的原因之一。</p>
+<p>Options API 的设计是按照 methods、computed、data、props 这些不同的选项分类，当组件小的时候，这种分类方式一目了然；但是在大型组件中，一个组件可能有多个逻辑关注点，当使用 Options API 的时候，每一个关注点都有自己的 Options，如果需要修改一个逻辑点关注点，就需要在单个文件中不断上下切换和寻找。</p>
+<p>Vue.js 3.0 提供了一种新的 API：Composition API，它有一个很好的机制去解决这样的问题，就是将某个逻辑关注点相关的代码全都放在一个函数里，这样当需要修改一个功能时，就不再需要在文件中跳来跳去。</p>
+<h4 id="2-优化逻辑复用"><a href="#2-优化逻辑复用" class="headerlink" title="2.优化逻辑复用"></a>2.优化逻辑复用</h4><p>其次，是优化逻辑复用</p>
+<p>当我们开发项目变得复杂的时候，免不了需要抽象出一些复用的逻辑。在 Vue.js 2.x 中，我们通常会用 mixins 去复用逻辑，举一个鼠标位置侦听的例子，我们会编写如下函数 mousePositionMixin：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> mousePositionMixin = &#123;</span><br><span class="line">  <span class="function"><span class="title">data</span>(<span class="params"></span>)</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> &#123;</span><br><span class="line">      x: <span class="number">0</span>,</span><br><span class="line">      y: <span class="number">0</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="function"><span class="title">mounted</span>(<span class="params"></span>)</span> &#123;</span><br><span class="line">    <span class="built_in">window</span>.addEventListener(<span class="string">&#x27;mousemove&#x27;</span>, <span class="built_in">this</span>.update)</span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="function"><span class="title">destroyed</span>(<span class="params"></span>)</span> &#123;</span><br><span class="line">    <span class="built_in">window</span>.removeEventListener(<span class="string">&#x27;mousemove&#x27;</span>, <span class="built_in">this</span>.update)</span><br><span class="line">  &#125;,</span><br><span class="line">  methods: &#123;</span><br><span class="line">    <span class="function"><span class="title">update</span>(<span class="params">e</span>)</span> &#123;</span><br><span class="line">      <span class="built_in">this</span>.x = e.pageX</span><br><span class="line">      <span class="built_in">this</span>.y = e.pageY</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> mousePositionMixin</span><br></pre></td></tr></table></figure>
+
+<p>然后在组件中使用：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&lt;template&gt;</span><br><span class="line">  &lt;div&gt;</span><br><span class="line">    Mouse position: x &#123;&#123; x &#125;&#125; &#x2F; y &#123;&#123; y &#125;&#125;</span><br><span class="line">  &lt;&#x2F;div&gt;</span><br><span class="line">&lt;&#x2F;template&gt;</span><br><span class="line">&lt;script&gt;</span><br><span class="line">import mousePositionMixin from &#39;.&#x2F;mouse&#39;</span><br><span class="line">export default &#123;</span><br><span class="line">  mixins: [mousePositionMixin]</span><br><span class="line">&#125;</span><br><span class="line">&lt;&#x2F;script&gt;</span><br></pre></td></tr></table></figure>
+
+<p>使用单个 mixin 似乎问题不大，但是当我们一个组件混入大量不同的 mixins 的时候，会存在两个非常明显的问题：命名冲突和数据来源不清晰。</p>
+<p>首先每个 mixin 都可以定义自己的 props、data，它们之间是无感的，所以很容易定义相同的变量，导致命名冲突。另外对组件而言，如果模板中使用不在当前组件中定义的变量，那么就会不太容易知道这些变量在哪里定义的，这就是数据来源不清晰。但是Vue.js 3.0 设计的 Composition API，就很好地帮助我们解决了 mixins 的这两个问题。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">import &#123; ref, onMounted, onUnmounted &#125; from &#39;vue&#39;</span><br><span class="line">export default function useMousePosition() &#123;</span><br><span class="line">  const x &#x3D; ref(0)</span><br><span class="line">  const y &#x3D; ref(0)</span><br><span class="line">  const update &#x3D; e &#x3D;&gt; &#123;</span><br><span class="line">    x.value &#x3D; e.pageX</span><br><span class="line">    y.value &#x3D; e.pageY</span><br><span class="line">  &#125;</span><br><span class="line">  onMounted(() &#x3D;&gt; &#123;</span><br><span class="line">    window.addEventListener(&#39;mousemove&#39;, update)</span><br><span class="line">  &#125;)</span><br><span class="line">  onUnmounted(() &#x3D;&gt; &#123;</span><br><span class="line">    window.removeEventListener(&#39;mousemove&#39;, update)</span><br><span class="line">  &#125;)</span><br><span class="line">  return &#123; x, y &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里我们约定 useMousePosition 这个函数为 hook 函数，然后在组件中使用：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">&lt;template&gt;</span><br><span class="line">  &lt;div&gt;</span><br><span class="line">    Mouse position: x &#123;&#123; x &#125;&#125; &#x2F; y &#123;&#123; y &#125;&#125;</span><br><span class="line">  &lt;&#x2F;div&gt;</span><br><span class="line">&lt;&#x2F;template&gt;</span><br><span class="line">&lt;script&gt;</span><br><span class="line">  import useMousePosition from &#39;.&#x2F;mouse&#39;</span><br><span class="line">  export default &#123;</span><br><span class="line">    setup() &#123;</span><br><span class="line">      const &#123; x, y &#125; &#x3D; useMousePosition()</span><br><span class="line">      return &#123; x, y &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&lt;&#x2F;script&gt;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，整个数据来源清晰了，即使去编写更多的 hook 函数，也不会出现命名冲突的问题。</p>
+<p>Composition API 除了在逻辑复用方面有优势，也会有更好的类型支持，因为它们都是一些函数，在调用函数时，自然所有的类型就被推导出来了，不像 Options API 所有的东西使用 this。另外，Composition API 对 tree-shaking 友好，代码也更容易压缩。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/04/23/%E4%BA%8B%E4%BB%B6%E5%BE%AA%E7%8E%AF%EF%BC%9A%E9%AB%98%E6%80%A7%E8%83%BD%E5%88%B0%E5%BA%95%E6%98%AF%E5%A6%82%E4%BD%95%E5%81%9A%E5%88%B0%E7%9A%84/" rel="prev" title="事件循环：高性能到底是如何做到的">
+      <i class="fa fa-chevron-left"></i> 事件循环：高性能到底是如何做到的
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/04/23/Vue3-0-vnode%E5%88%B0%E7%9C%9F%E5%AE%9EDOM%E8%BD%AC%E6%8D%A2/" rel="next" title="Vue3.0: vnode到真实DOM转换">
+      Vue3.0: vnode到真实DOM转换 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%BA%90%E7%A0%81%E4%BC%98%E5%8C%96"><span class="nav-number">1.</span> <span class="nav-text">源码优化</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-%E6%9B%B4%E5%A5%BD%E7%9A%84%E4%BB%A3%E7%A0%81%E7%AE%A1%E7%90%86%E6%96%B9%E5%BC%8F%EF%BC%9Amonorepo"><span class="nav-number">1.1.</span> <span class="nav-text">1. 更好的代码管理方式：monorepo</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9C%89%E7%B1%BB%E5%9E%8B%E7%9A%84javascript%EF%BC%9ATypeScript"><span class="nav-number">1.2.</span> <span class="nav-text">有类型的javascript：TypeScript</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96"><span class="nav-number">2.</span> <span class="nav-text">性能优化</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-%E6%BA%90%E7%A0%81%E4%BD%93%E7%A7%AF%E4%BC%98%E5%8C%96"><span class="nav-number">2.1.</span> <span class="nav-text">1. 源码体积优化</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E6%95%B0%E6%8D%AE%E5%8A%AB%E6%8C%81%E4%BC%98%E5%8C%96"><span class="nav-number">3.</span> <span class="nav-text">2.数据劫持优化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%AD%E6%B3%95-API-%E4%BC%98%E5%8C%96%EF%BC%9AComposition-API"><span class="nav-number">4.</span> <span class="nav-text">语法 API 优化：Composition API</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-%E4%BC%98%E5%8C%96%E9%80%BB%E8%BE%91%E7%BB%84%E7%BB%87"><span class="nav-number">4.1.</span> <span class="nav-text">1.优化逻辑组织</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-%E4%BC%98%E5%8C%96%E9%80%BB%E8%BE%91%E5%A4%8D%E7%94%A8"><span class="nav-number">4.2.</span> <span class="nav-text">2.优化逻辑复用</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Choo</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">13</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Choo</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
