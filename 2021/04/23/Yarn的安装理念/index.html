@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="当npm还处在v3阶段时，一个叫做Yarn的包管理方案横空出世。2016年，npm 还没有 package-lock.json 文件，安装速度很慢，稳定性也较差，而 Yarn 的理念很好地解决了以下问题。  确定性：通过yarn.lock等机制，保证了确定性。即不管安装顺序如何，相同的以来关系在任何机器和环境下，都可以以相同的方式被安装（在npm5之前，没有package-lock.json机制，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Yarn的安装理念">
+<meta property="og:url" content="http://example.com/2021/04/23/Yarn%E7%9A%84%E5%AE%89%E8%A3%85%E7%90%86%E5%BF%B5/index.html">
+<meta property="og:site_name" content="Choo&#39;blog">
+<meta property="og:description" content="当npm还处在v3阶段时，一个叫做Yarn的包管理方案横空出世。2016年，npm 还没有 package-lock.json 文件，安装速度很慢，稳定性也较差，而 Yarn 的理念很好地解决了以下问题。  确定性：通过yarn.lock等机制，保证了确定性。即不管安装顺序如何，相同的以来关系在任何机器和环境下，都可以以相同的方式被安装（在npm5之前，没有package-lock.json机制，">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-04-23T09:06:24.000Z">
+<meta property="article:modified_time" content="2021-04-23T09:06:43.711Z">
+<meta property="article:author" content="Choo">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2021/04/23/Yarn%E7%9A%84%E5%AE%89%E8%A3%85%E7%90%86%E5%BF%B5/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Yarn的安装理念 | Choo'blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Choo'blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/04/23/Yarn%E7%9A%84%E5%AE%89%E8%A3%85%E7%90%86%E5%BF%B5/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Choo">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Choo'blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Yarn的安装理念
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-04-23 17:06:24 / 修改时间：17:06:43" itemprop="dateCreated datePublished" datetime="2021-04-23T17:06:24+08:00">2021-04-23</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>当npm还处在v3阶段时，一个叫做Yarn的包管理方案横空出世。2016年，npm 还没有 package-lock.json 文件，安装速度很慢，稳定性也较差，而 Yarn 的理念很好地解决了以下问题。</p>
+<ul>
+<li><strong>确定性</strong>：通过yarn.lock等机制，保证了确定性。即不管安装顺序如何，相同的以来关系在任何机器和环境下，都可以以相同的方式被安装（在npm5之前，没有package-lock.json机制，只有默认并不会使用的npm=shrinkwrap.json）</li>
+<li><strong>采用模块扁平安装模式</strong>：将依赖包的不同版本，按照一定策略，归结为单个版本，以避免创建多个副本造成冗余</li>
+<li><strong>网络性能更好</strong>：Yarn采用了请求排队的理念，类似并发连接池，能够更好地利用网络资源；同时引入了更好的安装失败时的重试机制</li>
+<li><strong>采用缓存机制</strong>，实现了离线模式(npm目前也有类似实现)</li>
+</ul>
+<p>该结构整体和package-lock.json结构类似，只不过yarn.lock并没有使用JSON格式，而是采用了一种自定义的标记格式，新的格式仍然保持了较高的可读性。</p>
+<p>相比npm，yarn另外一个显著区别是yarn.lock中自以来的版本号不是固定版本。这就说明单独一个yarn.lock确定不了node_modules目录结构，还需要和package.json文件进行配合</p>
+<h3 id="Yarn-安装机制和背后思想"><a href="#Yarn-安装机制和背后思想" class="headerlink" title="Yarn 安装机制和背后思想"></a>Yarn 安装机制和背后思想</h3><p>简单来说，Yarn 的安装过程主要有以下 5 大步骤：<br>检测(checking) =&gt; 解析包(resolving packges) =&gt; 获取包(fetching packages) =&gt; 链接包(linking packages) =&gt; 构建包(building packages)</p>
+<h4 id="检测包"><a href="#检测包" class="headerlink" title="检测包"></a>检测包</h4><p>这一步主要是检测项目中是否存在一些npm相关文件，比如package-lock.json等。如果有，会提示用户注意：这些文件的存在可能会导致冲突。</p>
+<h4 id="解析包"><a href="#解析包" class="headerlink" title="解析包"></a>解析包</h4><p>这一步会解析依赖树中每一个包的版本信息<br>首先获取当前项目中package.json定义的dependencies、devDependencies、optionalDependencies 的内容，这属于首层依赖<br>接着采用遍历首层以来的方式获取依赖包的版本信息，以及递归查找每个依赖下潜逃的版本信息，并将解析过和正在解析的包用一个Set数据结构来存储，这样就能保证同一个保本范围内的包不会被重复解析。<br>• 对于没有解析过的包A，首次尝试从yarn.lock中获取到版本信息，并标记为已解析<br>• 如果在Yarn.lock中没有找到包A，则向Registry发起请求获取满足版本范围的已知最高版本的包信息，获取后将当前包标记为一解析。</p>
+<h4 id="获取包"><a href="#获取包" class="headerlink" title="获取包"></a>获取包</h4><p>这一步我们首先需要检查缓存中是否存在当前的依赖包，同时将混存中不存在的依赖包下载到缓存目录。</p>
+<h4 id="链接包"><a href="#链接包" class="headerlink" title="链接包"></a>链接包</h4><p>上一步是将依赖下载到缓存目录，这一步是将项目中的依赖复制到项目node_modules下，同时遵循扁平化原则。在复制依赖前，yarn会先解析peerDependencies，如果找不到符合peerDependencies 的包，则进行warning提示，并最终拷贝依赖到项目中。</p>
+<h4 id="构建包"><a href="#构建包" class="headerlink" title="构建包"></a>构建包</h4><p>如果依赖包中存在二进制包需要进行编译，会在这一步进行</p>
+<h3 id="破解依赖管理困境"><a href="#破解依赖管理困境" class="headerlink" title="破解依赖管理困境"></a>破解依赖管理困境</h3><p>早起npm的设计非常简单，在安装依赖时将依赖放到项目的node_modules文件中；同时如果某个直接依赖A还依赖其他模块B，作为间接依赖，模块B将会被下载到A的node_modules文件夹中， 依此递归执行，最终形成了一颗巨大的依赖模块树。<br>这样的 node_modules 结构，的确简单明了、符合预期，但对大型项目在某些方面却不友好，比如可能有很多重复的依赖包，而且会形成“嵌套地狱”。<br>那么如何理解“嵌套地狱”呢？</p>
+<p>• 项目依赖树的层级非常深，不利于调试和排查问题<br>• 依赖树的不同分支里，可能存在同样版本的相同依赖。比如直接依赖A和B，但A和B都依赖相同版本的模块C，那么C会重复出现在A和B的node_modules中</p>
+<p>这种重复问题使得安装结果浪费了较大的空间资源，也使得安装过程过慢，甚至会因为目录级层太深导致路径太长，最终在windows系统下删除node_modules文件夹出现失败情况。</p>
+<p>因此，npm v3版本之后，nodu_modules的结构改成了扁平结构</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/04/23/npm%E5%AE%89%E8%A3%85%E6%9C%BA%E5%88%B6/" rel="prev" title="npm安装机制">
+      <i class="fa fa-chevron-left"></i> npm安装机制
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Yarn-%E5%AE%89%E8%A3%85%E6%9C%BA%E5%88%B6%E5%92%8C%E8%83%8C%E5%90%8E%E6%80%9D%E6%83%B3"><span class="nav-number">1.</span> <span class="nav-text">Yarn 安装机制和背后思想</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A3%80%E6%B5%8B%E5%8C%85"><span class="nav-number">1.1.</span> <span class="nav-text">检测包</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%A7%A3%E6%9E%90%E5%8C%85"><span class="nav-number">1.2.</span> <span class="nav-text">解析包</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%8E%B7%E5%8F%96%E5%8C%85"><span class="nav-number">1.3.</span> <span class="nav-text">获取包</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%93%BE%E6%8E%A5%E5%8C%85"><span class="nav-number">1.4.</span> <span class="nav-text">链接包</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9E%84%E5%BB%BA%E5%8C%85"><span class="nav-number">1.5.</span> <span class="nav-text">构建包</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A0%B4%E8%A7%A3%E4%BE%9D%E8%B5%96%E7%AE%A1%E7%90%86%E5%9B%B0%E5%A2%83"><span class="nav-number">2.</span> <span class="nav-text">破解依赖管理困境</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Choo</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">2</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Choo</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
