@@ -20,17 +20,19 @@
     var CONFIG = {"hostname":"example.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta property="og:type" content="website">
-<meta property="og:title" content="categories">
-<meta property="og:url" content="http://example.com/categories/index.html">
+  <meta name="description" content="正则基本概念 正则基础规则 正则支持任意朴素字符 hello world   正则支持子正则的平行拼接 ^h(a|e)?llo\sworld\b.*$     字符模式 (匹配单个字符串) 字符组 [abc] a或b或c (匹配这些字符) [^abc]不是 a 或 b 或 c 的其他字符（排除这些字符） [a-z] 匹配a-z [g-zA-F1-5] 匹配小写 g 到 z、大写 A 到 F、数字">
+<meta property="og:type" content="article">
+<meta property="og:title" content="正则表达式基本规则">
+<meta property="og:url" content="http://example.com/2021/04/26/%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F%E5%9F%BA%E6%9C%AC%E8%A7%84%E5%88%99/index.html">
 <meta property="og:site_name" content="Choo&#39;blog">
+<meta property="og:description" content="正则基本概念 正则基础规则 正则支持任意朴素字符 hello world   正则支持子正则的平行拼接 ^h(a|e)?llo\sworld\b.*$     字符模式 (匹配单个字符串) 字符组 [abc] a或b或c (匹配这些字符) [^abc]不是 a 或 b 或 c 的其他字符（排除这些字符） [a-z] 匹配a-z [g-zA-F1-5] 匹配小写 g 到 z、大写 A 到 F、数字">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2021-04-23T08:31:32.000Z">
-<meta property="article:modified_time" content="2021-04-23T09:18:51.799Z">
+<meta property="article:published_time" content="2021-04-26T03:44:41.000Z">
+<meta property="article:modified_time" content="2021-04-26T08:29:59.339Z">
 <meta property="article:author" content="Choo">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="http://example.com/categories/">
+<link rel="canonical" href="http://example.com/2021/04/26/%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F%E5%9F%BA%E6%9C%AC%E8%A7%84%E5%88%99/">
 
 
 <script id="page-configurations">
@@ -38,13 +40,12 @@
   CONFIG.page = {
     sidebar: "",
     isHome : false,
-    isPost : false,
+    isPost : true,
     lang   : 'zh-CN'
   };
 </script>
 
-  <title>categories | Choo'blog
-</title>
+  <title>正则表达式基本规则 | Choo'blog</title>
   
 
 
@@ -146,51 +147,179 @@
       <div class="main-inner">
         <div class="content-wrap">
           
-  
-  
 
-          <div class="content page posts-expand">
+          <div class="content post posts-expand">
             
 
     
-    
-    
-    <div class="post-block" lang="zh-CN">
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/04/26/%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F%E5%9F%BA%E6%9C%AC%E8%A7%84%E5%88%99/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Choo">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Choo'blog">
+    </span>
       <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          正则表达式基本规则
+        </h1>
 
-<h1 class="post-title" itemprop="name headline">categories
-</h1>
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
 
-<div class="post-meta">
+              <time title="创建时间：2021-04-26 11:44:41 / 修改时间：16:29:59" itemprop="dateCreated datePublished" datetime="2021-04-26T11:44:41+08:00">2021-04-26</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="正则基本概念"><a href="#正则基本概念" class="headerlink" title="正则基本概念"></a>正则基本概念</h1><ul>
+<li>正则基础规则<ul>
+<li>正则支持任意朴素字符<ul>
+<li><code>hello world</code></li>
+</ul>
+</li>
+<li>正则支持子正则的平行拼接<ul>
+<li><code>^h(a|e)?llo\sworld\b.*$</code></li>
+</ul>
+</li>
+</ul>
+</li>
+<li>字符模式 (匹配单个字符串)<ul>
+<li>字符组<ul>
+<li>[abc] a或b或c (匹配这些字符)</li>
+<li>[^abc]不是 a 或 b 或 c 的其他字符（排除这些字符）</li>
+<li>[a-z] 匹配a-z</li>
+<li>[g-zA-F1-5] 匹配小写 g 到 z、大写 A 到 F、数字 1 到 5</li>
+</ul>
+</li>
+<li>转义字符<ul>
+<li><code>.</code>任意字符</li>
+<li><code>\s</code> 空格</li>
+<li><code>\S</code> 非空格</li>
+<li><code>\d</code> 数字</li>
+<li><code>\D</code> 非数字</li>
+<li><code>\w</code> 字符(字母+数字+下划线)</li>
+<li><code>\W</code> 非字符</li>
+<li><code>\t</code> tab</li>
+<li><code>\n</code> 换行</li>
+<li><code>\r</code> 回车</li>
+</ul>
+</li>
+<li>捕获和引用<ul>
+<li>捕获组()<ul>
+<li>(hallo) 匹配 hallo，且捕获括号内内容</li>
+<li>（捕获组的捕获顺序，按左括号从左到右为 1234…）</li>
+</ul>
+</li>
+<li>正则内引用 \1<ul>
+<li>(a,b).\1匹配 ‘ab,ab’</li>
+</ul>
+</li>
+<li>结果引用 (replace第二参数的特殊字符)<ul>
+<li><code>$1</code> 按捕获顺序，例如：<code>abcd.replace(/(ab)/, &#39;$1,&#39;)</code></li>
+<li><code>$&amp;</code> 匹配的整个子串</li>
+<li><em>$`</em> 匹配子串的左边文本（键盘左侧的反引号）</li>
+<li><em>$’</em> 匹配子串的右边文本（键盘右侧的引号）</li>
+<li><em>$$</em> 转义 $</li>
+</ul>
+</li>
+<li>组合模式（正则串的单次组合）<ul>
+<li>或 <code>｜</code><ul>
+<li><code>h(a|e)llo</code> 匹配 hallo 或 hello（切换匹配（并捕获））</li>
+</ul>
+</li>
+<li>量词（左边的 a 可以是任意正则模式）<ul>
+<li><code>a+</code> 匹配 ‘a、’aa’（至少一个）</li>
+<li><code>a*</code> 匹配 ‘’、’aaa’（零或多个）</li>
+<li><code>a?</code> 匹配 ‘’， ‘a’ (零或一个)</li>
+<li><code>a&#123;3&#125;</code> 匹配<code>aaa</code> (精确的N个)</li>
+<li><code>a&#123;3,&#125;</code> 匹配 ‘aaa’ 到 ‘aaaaaaa…’ (至少n个)</li>
+<li><code>a&#123;3,6&#125;</code> 匹配 ‘aaa’ 到 ‘aaaaaa’（N 到 M 个）</li>
+</ul>
+</li>
+<li>非贪婪 (惰性)<ul>
+<li><code>a&#123;3,6&#125;?</code> 匹配 ‘aaa’（非贪婪：匹配到越少越好）</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>位置模式(位置不是字符，不具有宽度)<ul>
+<li>转义字符<ul>
+<li><code>^</code> 行开头</li>
+<li><code>$</code> 行结尾</li>
+<li><code>\b</code> 单词边界</li>
+<li><code>\B</code> 非单词边界</li>
+</ul>
+</li>
+<li>断言 (其中的 a 可以是任意子正则)<ul>
+<li><code>(?=a)</code> Positive lookahead，右边匹配</li>
+<li><code>(?!a)</code> Negative lookahead，右边不匹配</li>
+<li><code>(?&lt;=a)</code> Positive lookbehind，左边匹配</li>
+<li><code>(?&lt;!a)</code> Negative lookbehind，左边不匹配</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>flags<ul>
+<li><code>g</code> global，全部（多次）匹配</li>
+<li><code>i</code> case-insensitive，忽略大小写</li>
+<li><code>m</code> multi-line，多行匹配</li>
+<li><code>u</code> unicode，开启 unicode 支持</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/04/25/%E5%87%BD%E6%95%B0%E7%BB%84%E5%90%88/" rel="prev" title="函数组合">
+      <i class="fa fa-chevron-left"></i> 函数组合
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
   
 
-</div>
-
-</header>
-
-      
-      
-      
-      <div class="post-body">
-          <div class="category-all-page">
-            <div class="category-all-title">
-              暂无分类
-            </div>
-            <div class="category-all">
-              
-            </div>
-          </div>
-        
-      </div>
-      
-      
-      
-    </div>
-    
-
-    
-    
-    
 
 
           </div>
@@ -241,6 +370,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%AD%A3%E5%88%99%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5"><span class="nav-number">1.</span> <span class="nav-text">正则基本概念</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
