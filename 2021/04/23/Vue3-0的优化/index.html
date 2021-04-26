@@ -30,7 +30,7 @@
 <meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/259122/1616574367425-f8002c3a-a103-4d47-a9e7-f0d50673f4e2.png">
 <meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/259122/1616574492486-577b2ba6-51cf-4765-bcca-aad57864a5e7.png">
 <meta property="article:published_time" content="2021-04-23T10:17:26.000Z">
-<meta property="article:modified_time" content="2021-04-23T10:17:42.868Z">
+<meta property="article:modified_time" content="2021-04-26T08:46:29.320Z">
 <meta property="article:author" content="Choo">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://cdn.nlark.com/yuque/0/2021/png/259122/1616574367425-f8002c3a-a103-4d47-a9e7-f0d50673f4e2.png">
@@ -180,10 +180,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
-              
 
-              <time title="创建时间：2021-04-23 18:17:26 / 修改时间：18:17:42" itemprop="dateCreated datePublished" datetime="2021-04-23T18:17:26+08:00">2021-04-23</time>
+              <time title="创建时间：2021-04-23 18:17:26" itemprop="dateCreated datePublished" datetime="2021-04-23T18:17:26+08:00">2021-04-23</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-04-26 16:46:29" itemprop="dateModified" datetime="2021-04-26T16:46:29+08:00">2021-04-26</time>
+              </span>
 
           
 
@@ -198,6 +204,7 @@
       
         <h3 id="源码优化"><a href="#源码优化" class="headerlink" title="源码优化"></a>源码优化</h3><p>码的优化主要体现在使用 monorepo 和 TypeScript 管理和开发源码，这样做的目标是提升自身代码可维护性。</p>
 <h4 id="1-更好的代码管理方式：monorepo"><a href="#1-更好的代码管理方式：monorepo" class="headerlink" title="1. 更好的代码管理方式：monorepo"></a>1. 更好的代码管理方式：monorepo</h4><p>首先，源码的优化体现在代码管理方式上。Vue2.x的源码托管在src目录，然后依据功能拆分出了compiler(模版编译的相关代码)、core(与平台无关的通用运行时代码)、platforms(平台专有代码)、sfc(.vue单文件解析相关代码)、shared(共享工具代码)等目录</p>
+<span id="more"></span>
 <p><img src="https://cdn.nlark.com/yuque/0/2021/png/259122/1616574367425-f8002c3a-a103-4d47-a9e7-f0d50673f4e2.png"></p>
 <p>而到了 Vue.js 3.0，整个源码是通过monorepo的方式维护的，根据功能将不同的模块拆分到packages目录下面不同的子目录中：</p>
 <p><img src="https://cdn.nlark.com/yuque/0/2021/png/259122/1616574492486-577b2ba6-51cf-4765-bcca-aad57864a5e7.png"></p>

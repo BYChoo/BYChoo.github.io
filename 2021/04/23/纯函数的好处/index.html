@@ -28,7 +28,7 @@
 <meta property="og:description" content="纯函数的概念 纯函数是这样一种函数，即相同的输入，永远会得到相同的输出，而且没有任何可观察的副作用  比如 slice 和 splice，这两个函数的作用并无二致——但是注意，它们各自的方式却大不同，但不管怎么说作用还是一样的。我们说 slice 符合纯函数的定义是因为对相同的输入它保证能返回相同的输出。而 splice 却会嚼烂调用它的那个数组，然后再吐出来；这就会产生可观察到的副作用，即这个数">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2021-04-23T10:22:49.000Z">
-<meta property="article:modified_time" content="2021-04-23T10:23:23.643Z">
+<meta property="article:modified_time" content="2021-04-26T08:46:29.355Z">
 <meta property="article:author" content="Choo">
 <meta name="twitter:card" content="summary">
 
@@ -177,10 +177,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
-              
 
-              <time title="创建时间：2021-04-23 18:22:49 / 修改时间：18:23:23" itemprop="dateCreated datePublished" datetime="2021-04-23T18:22:49+08:00">2021-04-23</time>
+              <time title="创建时间：2021-04-23 18:22:49" itemprop="dateCreated datePublished" datetime="2021-04-23T18:22:49+08:00">2021-04-23</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-04-26 16:46:29" itemprop="dateModified" datetime="2021-04-26T16:46:29+08:00">2021-04-26</time>
+              </span>
 
           
 
@@ -197,6 +203,7 @@
 <p>纯函数是这样一种函数，即相同的输入，永远会得到相同的输出，而且没有任何可观察的副作用</p>
 </blockquote>
 <p>比如 <strong>slice</strong> 和 <strong>splice</strong>，这两个函数的作用并无二致——但是注意，它们各自的方式却大不同，但不管怎么说作用还是一样的。我们说 <strong>slice</strong> 符合纯函数的定义是因为对相同的输入它保证能返回相同的输出。而 <strong>splice</strong> 却会嚼烂调用它的那个数组，然后再吐出来；这就会产生可观察到的副作用，即这个数组永久地改变了</p>
+<span id="more"></span>
 <p>在函数式编程中，我们讨厌这种会改变数据的笨函数。我们追求的是那种可靠的，每次都能返回同样结果的函数，而不是像 splice 这样每次调用后都把数据弄得一团糟的函数，这不是我们想要的。</p>
 <p>来看看另一个例子。</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 不纯的</span></span><br><span class="line"><span class="keyword">var</span> minimum = <span class="number">21</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> checkAge = <span class="function"><span class="keyword">function</span>(<span class="params">age</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> age &gt;= minimum;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">// 纯的</span></span><br><span class="line"><span class="keyword">var</span> checkAge = <span class="function"><span class="keyword">function</span>(<span class="params">age</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">var</span> minimum = <span class="number">21</span>;</span><br><span class="line">  <span class="keyword">return</span> age &gt;= minimum;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
