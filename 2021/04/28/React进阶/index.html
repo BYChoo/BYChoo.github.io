@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="组件类组件类，详细分的话有三种类，第一类说白了就是我平时用于继承的基类组件Component,PureComponent,还有就是react提供的内置的组件，比如Fragment,StrictMode,另一部分就是高阶组件forwardRef,memo等。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="React进阶">
+<meta property="og:url" content="http://example.com/2021/04/28/React%E8%BF%9B%E9%98%B6/index.html">
+<meta property="og:site_name" content="Choo&#39;blog">
+<meta property="og:description" content="组件类组件类，详细分的话有三种类，第一类说白了就是我平时用于继承的基类组件Component,PureComponent,还有就是react提供的内置的组件，比如Fragment,StrictMode,另一部分就是高阶组件forwardRef,memo等。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/5b4241cc9e044c608c5ca9c2648bcd48~tplv-k3u1fbpfcp-watermark.image">
+<meta property="og:image" content="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/030e96abf31d46ab8dd9f4f72389127c~tplv-k3u1fbpfcp-watermark.image">
+<meta property="og:image" content="https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/4a2cd13003af4b5880b0bee19973fd44~tplv-k3u1fbpfcp-watermark.image">
+<meta property="og:image" content="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/bf576c3e03714c1594bfddf2467fe877~tplv-k3u1fbpfcp-watermark.image">
+<meta property="article:published_time" content="2021-04-28T03:04:30.000Z">
+<meta property="article:modified_time" content="2021-04-28T14:17:10.096Z">
+<meta property="article:author" content="Choo">
+<meta property="article:tag" content="React">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/5b4241cc9e044c608c5ca9c2648bcd48~tplv-k3u1fbpfcp-watermark.image">
+
+<link rel="canonical" href="http://example.com/2021/04/28/React%E8%BF%9B%E9%98%B6/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>React进阶 | Choo'blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Choo'blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/04/28/React%E8%BF%9B%E9%98%B6/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Choo">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Choo'blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          React进阶
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-04-28 11:04:30 / 修改时间：22:17:10" itemprop="dateCreated datePublished" datetime="2021-04-28T11:04:30+08:00">2021-04-28</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/React/" itemprop="url" rel="index"><span itemprop="name">React</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="组件类"><a href="#组件类" class="headerlink" title="组件类"></a>组件类</h2><p>组件类，详细分的话有三种类，第一类说白了就是我平时用于继承的基类组件Component,PureComponent,还有就是react提供的内置的组件，比如Fragment,StrictMode,另一部分就是高阶组件forwardRef,memo等。</p>
+<p><img src="https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/5b4241cc9e044c608c5ca9c2648bcd48~tplv-k3u1fbpfcp-watermark.image" alt="House in Provence"></p>
+<span id="more"></span>
+<h3 id="Component"><a href="#Component" class="headerlink" title="Component"></a>Component</h3><p><code>Component</code> 是 <code>class</code> 组件的根基。类组件一切始于 <code>Component</code>。</p>
+<p><code>react/src/ReactBaseClasses.js</code></p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Component</span>(<span class="params">props, context, updater</span>) </span>&#123;</span><br><span class="line">  <span class="built_in">this</span>.props = props;</span><br><span class="line">  <span class="built_in">this</span>.context = context;</span><br><span class="line">  <span class="built_in">this</span>.refs = emptyObject;</span><br><span class="line">  <span class="built_in">this</span>.updater = updater || ReactNoopUpdateQueue;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们声明的类组件是什么时候以何种形式被实例化的呢？</p>
+<p><code>react-reconciler/src/ReactFiberClassComponent.js</code></p>
+<p>constructClassInstance</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">constructClassInstance</span>(<span class="params"></span></span></span><br><span class="line"><span class="function"><span class="params">    workInProgress,</span></span></span><br><span class="line"><span class="function"><span class="params">    ctor,</span></span></span><br><span class="line"><span class="function"><span class="params">    props</span></span></span><br><span class="line"><span class="function"><span class="params"></span>)</span>&#123;</span><br><span class="line">   <span class="keyword">const</span> instance = <span class="keyword">new</span> ctor(props, context);</span><br><span class="line">    instance.updater = &#123;</span><br><span class="line">        isMounted,</span><br><span class="line">        <span class="function"><span class="title">enqueueSetState</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">            <span class="comment">/* setState 触发这里面的逻辑 */</span></span><br><span class="line">        &#125;,</span><br><span class="line">        <span class="function"><span class="title">enqueueReplaceState</span>(<span class="params"></span>)</span>&#123;&#125;,</span><br><span class="line">        <span class="function"><span class="title">enqueueForceUpdate</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">            <span class="comment">/* forceUpdate 触发这里的逻辑 */</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>对于component，react处理逻辑还是很简单的，实例化我们类组件，然后赋值updater对象，负责组件的更新。然后在组件各个阶段，执行类组件的render函数和对应的声明周期</p>
+<h3 id="PureComponent"><a href="#PureComponent" class="headerlink" title="PureComponent"></a>PureComponent</h3><p>PureComponent和Component用法，差不多一样，唯一不同的是，纯组件PureComponent会浅比较，props和state是否相同，来决定是否重新渲染组件。所以一般用于性能调优，减少render次数</p>
+<p>什么是浅比较</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Index</span> <span class="keyword">extends</span> <span class="title">React</span>.<span class="title">PureComponent</span></span>&#123;</span><br><span class="line">    <span class="function"><span class="title">constructor</span>(<span class="params">props</span>)</span>&#123;</span><br><span class="line">        <span class="built_in">super</span>(props)</span><br><span class="line">        <span class="built_in">this</span>.state=&#123;</span><br><span class="line">           data:&#123;</span><br><span class="line">              name:<span class="string">&#x27;alien&#x27;</span>,</span><br><span class="line">              age:<span class="number">28</span></span><br><span class="line">           &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    handerClick= <span class="function">() =&gt;</span>&#123;</span><br><span class="line">        <span class="keyword">const</span> &#123; data &#125; = <span class="built_in">this</span>.state</span><br><span class="line">        data.age++</span><br><span class="line">        <span class="built_in">this</span>.setState(&#123; data &#125;)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="title">render</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="keyword">const</span> &#123; data &#125; = <span class="built_in">this</span>.state</span><br><span class="line">        <span class="keyword">return</span> <span class="xml"><span class="tag">&lt;<span class="name">div</span> <span class="attr">className</span>=<span class="string">&quot;box&quot;</span> &gt;</span></span></span><br><span class="line">        &lt;div className=&quot;show&quot; &gt;</span><br><span class="line">            &lt;div&gt; 你的姓名是: &#123; data.name &#125; &lt;/div&gt;</span><br><span class="line">            &lt;div&gt; 年龄： &#123; data.age  &#125;&lt;/div&gt;</span><br><span class="line">            &lt;button onClick=&#123; this.handerClick &#125; &gt;age++&lt;/button&gt;</span><br><span class="line"><span class="xml">        <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span></span><br><span class="line"><span class="xml">    <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/030e96abf31d46ab8dd9f4f72389127c~tplv-k3u1fbpfcp-watermark.image" alt="img"></p>
+<p>点击按钮，没有任何反应，因为PureComponent会比较两次data对象，都指向同一个data,没有发生改变，所以不更新视图。</p>
+<p>解决这个问题很简单，只需要在handerClick事件中这么写：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">this</span>.setState(&#123;<span class="attr">data</span>: &#123;...data&#125;&#125;)</span><br></pre></td></tr></table></figure>
+
+<p>浅拷贝就能解决问题</p>
+<h3 id="memo"><a href="#memo" class="headerlink" title="memo"></a>memo</h3><p><code>React.memo</code> 和 <code>PureComponent</code> 作用类似，可以用作性能优化，<code>React.memo</code> 是高阶组件，函数组件和类组件都可以使用，和区别 <code>PureComponent</code> 是 <code>React.memo</code>只能对<br>props的情况确定是否渲染，而 <code>PureComponent</code> 是针对 <code>props</code> 和 <code>state</code></p>
+<p><code>React.memo</code> 接受两个参数，第一个参数原始组件本身，第二个参数，可以根据一次更新中props是否相同决定原始组件是否重新。是一个返回布尔值，<code>true</code> 证明组件无须重新渲染， <code>false</code> 证明<br>组件需要重新渲染，这个和类组件中的 <code>shouldComponentUpdate()</code> 正好相反</p>
+<p><em>React.memo: 第二个参数 返回 true 组件不渲染 ， 返回 false 组件重新渲染。</em> </p>
+<p><em>shouldComponentUpdate: 返回 true 组件渲染 ， 返回 false 组件不渲染。</em></p>
+<p>接下来我们做一个场景，控制组件在仅此一个props数字变量，一定范围渲染。</p>
+<p>控制 <code>props</code> 中的number：</p>
+<ul>
+<li>1只有 <code>number</code> 更改，组件渲染</li>
+<li>2只有 <code>number</code> 小于5，组件渲染</li>
+</ul>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">TextMemo</span>(<span class="params">props</span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">&#x27;子组件渲染&#x27;</span>)</span><br><span class="line">    <span class="keyword">if</span> (props)&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="xml"><span class="tag">&lt;<span class="name">div</span>&gt;</span>hello,world<span class="tag">&lt;/<span class="name">div</span>&gt;</span></span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> controlIsRender = <span class="function">(<span class="params">pre,next</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">if</span>(pre.number === next.number  )&#123; <span class="comment">// number 不改变 ，不渲染组件</span></span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">    &#125;<span class="keyword">else</span> <span class="keyword">if</span>(pre.number !== next.number &amp;&amp; next.number &gt; <span class="number">5</span> ) &#123; <span class="comment">// number 改变 ，但值大于5 ， 不渲染组件</span></span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">    &#125;<span class="keyword">else</span> &#123; <span class="comment">// 否则渲染组件</span></span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> NewTexMemo = memo(TextMemo, controlIsRender)</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Index</span> <span class="keyword">extends</span> <span class="title">React</span>.<span class="title">Component</span></span>&#123;</span><br><span class="line">    <span class="function"><span class="title">constructor</span>(<span class="params">props</span>)</span>&#123;</span><br><span class="line">        <span class="built_in">super</span>(props)</span><br><span class="line">        <span class="built_in">this</span>.state=&#123;</span><br><span class="line">            number:<span class="number">1</span>,</span><br><span class="line">            num:<span class="number">1</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="title">render</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="keyword">const</span> &#123; num , number &#125;  = <span class="built_in">this</span>.state</span><br><span class="line">        <span class="keyword">return</span> &lt;div&gt;</span><br><span class="line">            &lt;div&gt;</span><br><span class="line">                改变num：当前值 &#123; num &#125;</span><br><span class="line">                &lt;button onClick=&#123; <span class="function">()=&gt;</span><span class="built_in">this</span>.setState(&#123; <span class="attr">num</span>:num + <span class="number">1</span> &#125;) &#125; &gt;num++&lt;/button&gt;</span><br><span class="line">                &lt;button onClick=&#123; <span class="function">()=&gt;</span><span class="built_in">this</span>.setState(&#123; <span class="attr">num</span>:num - <span class="number">1</span> &#125;) &#125; &gt;num--&lt;/button&gt;</span><br><span class="line">            &lt;/div&gt;</span><br><span class="line">            &lt;div&gt;</span><br><span class="line">                改变number： 当前值 &#123; number &#125;</span><br><span class="line">                &lt;button onClick=&#123; <span class="function">()=&gt;</span><span class="built_in">this</span>.setState(&#123; <span class="attr">number</span>:number + <span class="number">1</span> &#125;) &#125; &gt; number ++&lt;/button&gt;</span><br><span class="line">                &lt;button onClick=&#123; <span class="function">()=&gt;</span><span class="built_in">this</span>.setState(&#123; <span class="attr">number</span>:number - <span class="number">1</span> &#125;) &#125; &gt; number -- &lt;/button&gt;</span><br><span class="line">            &lt;/div&gt;</span><br><span class="line">            &lt;NewTexMemo num=&#123; num &#125; number=&#123;number&#125;  /&gt;</span><br><span class="line">        &lt;/div&gt;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>React.memo一定程度上，可以等价于组件外部使用 <code>shouldComponentUpdate</code>，用于拦截新老props，确定组件是否更新</p>
+<h3 id="forwardRef"><a href="#forwardRef" class="headerlink" title="forwardRef"></a>forwardRef</h3><p><code>forwardRef</code> 应用场景</p>
+<p><em>1）转发引入Ref</em></p>
+<p>这个场景实际很简单，比如父组件想要获取孙组件，某一个 <code>dom</code> 元素，这种隔代 <code>ref</code> 获取引用，就需要 <code>forwardRef</code> 来助力。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Son</span> (<span class="params">props</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">const</span> &#123; grandRef &#125; = props</span><br><span class="line">    <span class="keyword">return</span> (&lt;div&gt;</span><br><span class="line">        &lt;div&gt;i am alien&lt;/div&gt;</span><br><span class="line">    &lt;/div&gt;)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Father</span> <span class="keyword">extends</span> <span class="title">React</span>.<span class="title">Component</span> </span>&#123;</span><br><span class="line">    <span class="title">constructor</span> (<span class="params">props</span>) &#123;</span><br><span class="line">        <span class="built_in">super</span>(props)</span><br><span class="line">    &#125;</span><br><span class="line">    render () &#123;</span><br><span class="line">        <span class="keyword">return</span> (</span><br><span class="line">            &lt;div&gt;</span><br><span class="line">                &lt;Son grandRef=&#123;<span class="built_in">this</span>.props.grandRef&#125;  /&gt;</span><br><span class="line">            &lt;/div&gt;</span><br><span class="line">        )</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> NewFather = React.forwardRef(<span class="function">(<span class="params">props,ref</span>)=&gt;</span><span class="xml"><span class="tag">&lt;<span class="name">Father</span> <span class="attr">grandRef</span>=<span class="string">&#123;ref&#125;</span>  &#123;<span class="attr">...props</span>&#125; /&gt;</span></span>  )</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">GrandFather</span> <span class="keyword">extends</span> <span class="title">React</span>.<span class="title">Component</span></span>&#123;</span><br><span class="line">    <span class="function"><span class="title">constructor</span>(<span class="params">props</span>)</span>&#123;</span><br><span class="line">        <span class="built_in">super</span>(props)</span><br><span class="line">    &#125;</span><br><span class="line">    node = <span class="literal">null</span></span><br><span class="line">    <span class="function"><span class="title">componentDidMount</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="built_in">this</span>.node)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="title">render</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="keyword">return</span> &lt;div&gt;</span><br><span class="line">            &lt;NewFather ref=&#123;<span class="function">(<span class="params">node</span>)=&gt;</span> <span class="built_in">this</span>.node = node &#125; /&gt;</span><br><span class="line">        &lt;/div&gt;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>效果</p>
+<p><img src="https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/4a2cd13003af4b5880b0bee19973fd44~tplv-k3u1fbpfcp-watermark.image" alt="img"></p>
+<p><code>react</code> 不允许 <code>ref</code> 通过 <code>props</code> 传递，因为组件上已经有 <code>ref</code> 这个属性,在组件调和过程中，已经被特殊处理，<code>forwardRef</code> 出现就是解决这个问题，把 <code>ref</code> 转发到自定义的 <code>forwardRef</code> 定义的属性上，让<code>ref</code>，可以通过<code>props</code>传递。</p>
+<h3 id="lazy"><a href="#lazy" class="headerlink" title="lazy"></a>lazy</h3><p><code>React.lazy</code> 和 <code>suspense</code> 配合一起用，能够有动态加载组件的效果。<code>React.lazy</code> 接受一个函数，这个函数需要动态调用 <code>import()</code>。它必须返回一个 <code>Promise</code>，该<br><code>Promise</code> 需要 <code>resolve</code> 一个d <code>efault export</code> 的 <code>React</code> 组件</p>
+<p>模拟一个动态加载的场景</p>
+<p><em>父组件</em></p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> Test <span class="keyword">from</span> <span class="string">&#x27;./comTest&#x27;</span></span><br><span class="line"><span class="keyword">const</span> LazyComponent =  React.lazy(<span class="function">()=&gt;</span> <span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function">(<span class="params">resolve</span>)=&gt;</span>&#123;</span><br><span class="line">      <span class="built_in">setTimeout</span>(<span class="function">()=&gt;</span>&#123;</span><br><span class="line">          resolve(&#123;</span><br><span class="line">              <span class="keyword">default</span>: <span class="function">()=&gt;</span> <span class="xml"><span class="tag">&lt;<span class="name">Test</span> /&gt;</span></span></span><br><span class="line">          &#125;)</span><br><span class="line">      &#125;,<span class="number">2000</span>)</span><br><span class="line">&#125;))</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">index</span> <span class="keyword">extends</span> <span class="title">React</span>.<span class="title">Component</span></span>&#123;   </span><br><span class="line">    <span class="function"><span class="title">render</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="xml"><span class="tag">&lt;<span class="name">div</span> <span class="attr">className</span>=<span class="string">&quot;context_box&quot;</span>  <span class="attr">style</span>=<span class="string">&#123;</span> &#123; <span class="attr">marginTop</span> <span class="attr">:</span>&#x27;<span class="attr">50px</span>&#x27; &#125; &#125;   &gt;</span></span></span><br><span class="line">           &lt;React.Suspense fallback=&#123; &lt;div className=&quot;icon&quot; &gt;&lt;SyncOutlined  spin  /&gt;&lt;/div&gt; &#125; &gt;</span><br><span class="line">               &lt;LazyComponent /&gt;</span><br><span class="line"><span class="xml">           <span class="tag">&lt;/<span class="name">React.Suspense</span>&gt;</span></span></span><br><span class="line"><span class="xml">        <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们用 <code>setTimeout</code> 来模拟 <code>import</code> 异步引入效果</p>
+<p><em>Test</em></p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Test</span> <span class="keyword">extends</span> <span class="title">React</span>.<span class="title">Component</span></span>&#123;</span><br><span class="line">    <span class="function"><span class="title">constructor</span>(<span class="params">props</span>)</span>&#123;</span><br><span class="line">        <span class="built_in">super</span>(props)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="title">componentDidMount</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">&#x27;--componentDidMount--&#x27;</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="title">render</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="keyword">return</span> &lt;div&gt;</span><br><span class="line">            &lt;img src=&#123;alien&#125;  className=<span class="string">&quot;alien&quot;</span> /&gt;</span><br><span class="line">        &lt;/div&gt;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><em>效果</em></p>
+<p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/bf576c3e03714c1594bfddf2467fe877~tplv-k3u1fbpfcp-watermark.image" alt="213"></p>
+<h3 id="Suspense"><a href="#Suspense" class="headerlink" title="Suspense"></a>Suspense</h3><p>何为<code>Suspense</code>, <code>Suspense</code> 让组件“等待”某个异步操作，直到该异步操作结束即可渲染。</p>
+<p>用于数据获取的 <code>Suspense</code> 是一个新特性，你可以使用 <Suspense> 以声明的方式来“等待”任何内容，包括数据。本文重点介绍它在数据获取的用例，它也可以用于等待图像、脚本或其他异步的操作。</p>
+<p>上面讲到高阶组件<code>lazy</code>时候，已经用 <code>lazy + Suspense</code>模式，构建了异步渲染组件。我们看一下官网文档中的案例：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> ProfilePage = React.lazy(<span class="function">() =&gt;</span> <span class="keyword">import</span>(<span class="string">&#x27;./ProfilePage&#x27;</span>)); <span class="comment">// 懒加载</span></span><br><span class="line">&lt;Suspense fallback=&#123;<span class="xml"><span class="tag">&lt;<span class="name">Spinner</span> /&gt;</span></span>&#125;&gt;</span><br><span class="line">  &lt;ProfilePage /&gt;</span><br><span class="line">&lt;/Suspense&gt;</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/React/" rel="tag"># React</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/04/26/CSS%E5%AD%A6%E4%B9%A0%E6%8C%87%E5%8D%97/" rel="prev" title="CSS学习指南">
+      <i class="fa fa-chevron-left"></i> CSS学习指南
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%84%E4%BB%B6%E7%B1%BB"><span class="nav-number">1.</span> <span class="nav-text">组件类</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Component"><span class="nav-number">1.1.</span> <span class="nav-text">Component</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PureComponent"><span class="nav-number">1.2.</span> <span class="nav-text">PureComponent</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#memo"><span class="nav-number">1.3.</span> <span class="nav-text">memo</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#forwardRef"><span class="nav-number">1.4.</span> <span class="nav-text">forwardRef</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#lazy"><span class="nav-number">1.5.</span> <span class="nav-text">lazy</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Suspense"><span class="nav-number">1.6.</span> <span class="nav-text">Suspense</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Choo</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">17</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Choo</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
